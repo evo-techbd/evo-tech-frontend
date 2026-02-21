@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/all_utils";
 import { useEffect, useState } from "react";
+import { compressImage, compressImages } from "@/utils/image-compression";
 
 import { IoIosAddCircle } from "react-icons/io";
 import { Trash2, PlusCircle, Palette } from "lucide-react";
@@ -155,7 +156,7 @@ const AddProductForm = () => {
     const currentSubcategory = watch("item_subcategory");
     if (currentSubcategory) {
       const isValidSubcategory = subcategories.some(
-        (sub) => sub.value === currentSubcategory
+        (sub) => sub.value === currentSubcategory,
       );
       if (!isValidSubcategory) {
         setValue("item_subcategory", "");
@@ -180,132 +181,200 @@ const AddProductForm = () => {
     //   return;
     // }
 
-    const formdata = new FormData();
+    try {
+      // Show compression progress toast
+      const compressionToast = toast.loading("Compressing images...");
 
-    // Send field names matching backend schema
-    formdata.append("name", data.item_name);
-    formdata.append("slug", data.item_slug);
-    formdata.append("price", data.item_price);
-    if (data.item_buyingprice) {
-      formdata.append("buyingPrice", data.item_buyingprice);
-    }
-    formdata.append("previousPrice", data.item_prevprice);
-    formdata.append("inStock", String(Boolean(data.item_instock)));
+      const formdata = new FormData();
 
-    // Main image - backend expects 'mainImage' but multer uses field name from multer.single('mainImage')
-    // Handle both File instance and array from FileUploader component
-    if (data.item_mainimg) {
-      if (Array.isArray(data.item_mainimg) && data.item_mainimg.length > 0) {
-        formdata.append("mainImage", data.item_mainimg[0]);
-      } else if (data.item_mainimg instanceof File) {
-        formdata.append("mainImage", data.item_mainimg);
+      // Send field names matching backend schema
+      formdata.append("name", data.item_name);
+      formdata.append("slug", data.item_slug);
+      formdata.append("price", data.item_price);
+      if (data.item_buyingprice) {
+        formdata.append("buyingPrice", data.item_buyingprice);
       }
-    }
+      formdata.append("previousPrice", data.item_prevprice);
+      formdata.append("inStock", String(Boolean(data.item_instock)));
 
-    // Features array
-    if (data.item_features && data.item_features.length > 0) {
-      data.item_features.forEach((feature: string) => {
-        if (feature && feature.trim()) {
-          formdata.append("features[]", feature);
+      // Main image - compress and convert to WebP
+      // Handle both File instance and array from FileUploader component
+      if (data.item_mainimg) {
+        let mainImageFile: File | null = null;
+
+        if (Array.isArray(data.item_mainimg) && data.item_mainimg.length > 0) {
+          mainImageFile = data.item_mainimg[0];
+        } else if (data.item_mainimg instanceof File) {
+          mainImageFile = data.item_mainimg;
         }
-      });
-    }
 
-    // Colors array
-    // Colors array (send as JSON string)
-    if (data.item_colors && data.item_colors.length > 0) {
-      formdata.append("colors", JSON.stringify(data.item_colors));
-    }
-
-    // FAQ array (send as JSON string)
-    if (data.item_faq && data.item_faq.length > 0) {
-      // Map item_faq to backend expected structure if needed, but schema uses 'question', 'answer' which matches.
-      // Backend controller parses 'faqs' from body.
-      formdata.append("faqs", JSON.stringify(data.item_faq));
-    }
-
-    formdata.append("category", data.item_category);
-    if (data.item_subcategory) {
-      formdata.append("subcategory", data.item_subcategory);
-    }
-    formdata.append("brand", data.item_brand);
-    if (data.item_weight) {
-      formdata.append("weight", data.item_weight);
-    }
-    if (data.landing_section_id) {
-      formdata.append("landingpageSectionId", data.landing_section_id);
-    }
-
-    // Additional images for product images collection
-    if (data.additional_images && Array.isArray(data.additional_images)) {
-      data.additional_images.forEach((file: File, index) => {
-        formdata.append("additionalImages", file);
-      });
-    }
-
-    // New fields - Description & SEO
-    if (data.description) {
-      formdata.append("description", data.description);
-    }
-    if (data.shortDescription) {
-      formdata.append("shortDescription", data.shortDescription);
-    }
-    if (data.sku) {
-      formdata.append("sku", data.sku);
-    }
-
-    // Inventory fields
-    formdata.append("stock", data.stock ?? "0");
-    formdata.append("lowStockThreshold", data.lowStockThreshold ?? "10");
-
-    // Boolean flags
-    formdata.append("isFeatured", String(Boolean(data.isFeatured)));
-    formdata.append("published", String(Boolean(data.published)));
-
-    // Pre-order fields
-    formdata.append("isPreOrder", String(Boolean(data.isPreOrder)));
-    if (data.isPreOrder && data.preOrderDate) {
-      formdata.append("preOrderDate", data.preOrderDate);
-    }
-    if (data.isPreOrder && data.preOrderPrice) {
-      formdata.append("preOrderPrice", data.preOrderPrice);
-    }
-
-    // SEO fields
-    if (data.seoTitle) {
-      formdata.append("seoTitle", data.seoTitle);
-    }
-    if (data.seoDescription) {
-      formdata.append("seoDescription", data.seoDescription);
-    }
-
-    const response = await axios
-      .post(`/api/admin/products`, formdata, {
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((res) => {
-        return res.data;
-      })
-      .catch((error: any) => {
-        if (error.response) {
-          const errorMessage =
-            error.response.data.message || "Something went wrong";
-          toast.error(errorMessage);
-        } else if (error.request) {
-          toast.error("Something went wrong - check your network connection");
-        } else {
-          toast.error("Something went wrong");
+        if (mainImageFile) {
+          try {
+            const compressedMainImage = await compressImage(mainImageFile, {
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1920,
+              initialQuality: 0.8,
+            });
+            formdata.append("mainImage", compressedMainImage);
+            console.log(
+              `Main image compressed: ${(mainImageFile.size / 1024).toFixed(0)}KB -> ${(compressedMainImage.size / 1024).toFixed(0)}KB`,
+            );
+          } catch (error) {
+            console.error("Failed to compress main image:", error);
+            toast.dismiss(compressionToast);
+            toast.error(
+              "Failed to compress main image. Please try a smaller image.",
+            );
+            return;
+          }
         }
-        return null;
-      });
+      }
 
-    if (response && response.success) {
-      toast.success(response.message || `Item '${response.item_name || "New Product"}' created`);
-      reset();
-      router.push(`/control/products`);
+      // Features array
+      if (data.item_features && data.item_features.length > 0) {
+        data.item_features.forEach((feature: string) => {
+          if (feature && feature.trim()) {
+            formdata.append("features[]", feature);
+          }
+        });
+      }
+
+      // Colors array
+      // Colors array (send as JSON string)
+      if (data.item_colors && data.item_colors.length > 0) {
+        formdata.append("colors", JSON.stringify(data.item_colors));
+      }
+
+      // FAQ array (send as JSON string)
+      if (data.item_faq && data.item_faq.length > 0) {
+        // Map item_faq to backend expected structure if needed, but schema uses 'question', 'answer' which matches.
+        // Backend controller parses 'faqs' from body.
+        formdata.append("faqs", JSON.stringify(data.item_faq));
+      }
+
+      formdata.append("category", data.item_category);
+      if (data.item_subcategory) {
+        formdata.append("subcategory", data.item_subcategory);
+      }
+      formdata.append("brand", data.item_brand);
+      if (data.item_weight) {
+        formdata.append("weight", data.item_weight);
+      }
+      if (data.landing_section_id) {
+        formdata.append("landingpageSectionId", data.landing_section_id);
+      }
+
+      // Additional images for product images collection - compress and convert to WebP
+      if (
+        data.additional_images &&
+        Array.isArray(data.additional_images) &&
+        data.additional_images.length > 0
+      ) {
+        try {
+          const compressedAdditionalImages = await compressImages(
+            data.additional_images,
+            {
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1920,
+              initialQuality: 0.8,
+            },
+            (current, total) => {
+              toast.loading(`Compressing image ${current}/${total}...`, {
+                id: compressionToast,
+              });
+            },
+          );
+
+          compressedAdditionalImages.forEach((file: File, index) => {
+            formdata.append("additionalImages", file);
+          });
+
+          console.log(
+            `Additional images compressed: ${data.additional_images.length} files`,
+          );
+        } catch (error) {
+          console.error("Failed to compress additional images:", error);
+          toast.dismiss(compressionToast);
+          toast.error(
+            "Failed to compress additional images. Please try smaller images.",
+          );
+          return;
+        }
+      }
+
+      // Dismiss compression toast
+      toast.dismiss(compressionToast);
+
+      // New fields - Description & SEO
+      if (data.description) {
+        formdata.append("description", data.description);
+      }
+      if (data.shortDescription) {
+        formdata.append("shortDescription", data.shortDescription);
+      }
+      if (data.sku) {
+        formdata.append("sku", data.sku);
+      }
+
+      // Inventory fields
+      formdata.append("stock", data.stock ?? "0");
+      formdata.append("lowStockThreshold", data.lowStockThreshold ?? "10");
+
+      // Boolean flags
+      formdata.append("isFeatured", String(Boolean(data.isFeatured)));
+      formdata.append("published", String(Boolean(data.published)));
+
+      // Pre-order fields
+      formdata.append("isPreOrder", String(Boolean(data.isPreOrder)));
+      if (data.isPreOrder && data.preOrderDate) {
+        formdata.append("preOrderDate", data.preOrderDate);
+      }
+      if (data.isPreOrder && data.preOrderPrice) {
+        formdata.append("preOrderPrice", data.preOrderPrice);
+      }
+
+      // SEO fields
+      if (data.seoTitle) {
+        formdata.append("seoTitle", data.seoTitle);
+      }
+      if (data.seoDescription) {
+        formdata.append("seoDescription", data.seoDescription);
+      }
+
+      const response = await axios
+        .post(`/api/admin/products`, formdata, {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((res) => {
+          return res.data;
+        })
+        .catch((error: any) => {
+          if (error.response) {
+            const errorMessage =
+              error.response.data.message || "Something went wrong";
+            toast.error(errorMessage);
+          } else if (error.request) {
+            toast.error("Something went wrong - check your network connection");
+          } else {
+            toast.error("Something went wrong");
+          }
+          return null;
+        });
+
+      if (response && response.success) {
+        toast.success(
+          response.message ||
+            `Item '${response.item_name || "New Product"}' created`,
+        );
+        reset();
+        router.push(`/control/products`);
+      }
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast.error("Failed to process form. Please try again.");
     }
   };
 
@@ -1002,7 +1071,9 @@ const AddProductForm = () => {
             Main Image*{" "}
             <span className="text-gray-500 text-xs">{`(will be shown 1st)`}</span>
           </label>
-          <p className="text-[0.6875rem] leading-3 text-muted-foreground">{`(only jpeg/png/jpg/webp)`}</p>
+          <p className="text-[0.6875rem] leading-3 text-muted-foreground">
+            {`Max 10MB - Will be compressed to WebP (recommended: under 5MB)`}
+          </p>
           <div>
             {/* accept="image/jpeg, image/png, image/jpg, image/webp" */}
             <Controller
@@ -1037,7 +1108,9 @@ const AddProductForm = () => {
         {/* Additional Images */}
         <div>
           <label className="block text-sm font-medium">Additional Images</label>
-          <p className="text-[0.6875rem] leading-3 text-muted-foreground">{`(only jpeg/png/jpg/webp)`}</p>
+          <p className="text-[0.6875rem] leading-3 text-muted-foreground">
+            {`Max 10MB each - Will be compressed to WebP (recommended: under 5MB)`}
+          </p>
           <div>
             {/* accept="image/jpeg, image/png, image/jpg, image/webp" */}
             <Controller

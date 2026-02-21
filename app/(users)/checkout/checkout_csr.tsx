@@ -1354,7 +1354,7 @@ const CheckoutParts = () => {
                 <ul className="text-[10px] sm:text-[11px] leading-4 text-amber-700 space-y-0.5 list-none pl-0">
                   <li>{`✅ 50% advance payment is required, and the remaining balance must be paid on delivery.`}</li>
                   <li>{`✅ Delivery is expected within 45 working days, though international shipping and logistics may cause delays.`}</li>
-                  <li>{`✅ We promise timely delivery. If we take more than 60 working days, you'll receive a full refund with 5% bonus.`}</li>
+                  <li>{`✅ We promise timely delivery. If we take more than 60 working days, you'll receive a full refund with 2% bonus.`}</li>
                 </ul>
               </div>
             </div>

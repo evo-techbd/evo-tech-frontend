@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
 import type { FC } from "react";
 import { FiCheck } from "react-icons/fi";
 import * as Slider from "@radix-ui/react-slider";
@@ -11,6 +11,7 @@ interface ModernProductFiltersProps {
   availableSubcategories: any[];
   availableCategories?: any[];
   categorySlug?: string;
+  onFilterChange?: (isLoading: boolean) => void;
 }
 
 const ModernProductFilters = ({
@@ -18,10 +19,12 @@ const ModernProductFilters = ({
   availableSubcategories,
   availableCategories,
   categorySlug,
+  onFilterChange,
 }: ModernProductFiltersProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const [priceRange, setPriceRange] = useState<number[]>([
     parseInt(searchParams.get("minPrice") || "0"),
@@ -35,7 +38,7 @@ const ModernProductFilters = ({
       params.delete("page"); // Reset to first page on filter change
       return params.toString();
     },
-    [searchParams]
+    [searchParams],
   );
 
   const removeQueryParam = useCallback(
@@ -45,41 +48,58 @@ const ModernProductFilters = ({
       params.delete("page"); // Reset to first page on filter change
       return params.toString();
     },
-    [searchParams]
+    [searchParams],
   );
 
   const toggleFilter = useCallback(
     (filterName: string, value: string) => {
       const current = searchParams.get(filterName);
-      if (current === value) {
-        // Remove filter if clicking same value
-        router.push(`${pathname}?${removeQueryParam(filterName)}`, {
-          scroll: false,
-        });
-      } else {
-        // Set new filter value
-        router.push(`${pathname}?${createQueryString(filterName, value)}`, {
-          scroll: false,
-        });
-      }
+      onFilterChange?.(true);
+      startTransition(() => {
+        if (current === value) {
+          // Remove filter if clicking same value
+          router.push(`${pathname}?${removeQueryParam(filterName)}`, {
+            scroll: false,
+          });
+        } else {
+          // Set new filter value
+          router.push(`${pathname}?${createQueryString(filterName, value)}`, {
+            scroll: false,
+          });
+        }
+      });
     },
-    [searchParams, pathname, router, createQueryString, removeQueryParam]
+    [
+      searchParams,
+      pathname,
+      router,
+      createQueryString,
+      removeQueryParam,
+      onFilterChange,
+      startTransition,
+    ],
   );
 
   const applyPriceFilter = () => {
-    let query = createQueryString("minPrice", priceRange[0].toString());
-    const params = new URLSearchParams(query);
-    params.set("maxPrice", priceRange[1].toString());
-    params.delete("page");
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    onFilterChange?.(true);
+    startTransition(() => {
+      let query = createQueryString("minPrice", priceRange[0].toString());
+      const params = new URLSearchParams(query);
+      params.set("maxPrice", priceRange[1].toString());
+      params.delete("page");
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   const clearAllFilters = () => {
-    router.push(pathname, { scroll: false });
+    onFilterChange?.(true);
+    startTransition(() => {
+      router.push(pathname, { scroll: false });
+    });
   };
 
   const activeFiltersCount = Array.from(searchParams.keys()).filter(
-    (key) => !["page", "perpage", "sortBy", "sortOrder"].includes(key)
+    (key) => !["page", "perpage", "sortBy", "sortOrder"].includes(key),
   ).length;
 
   const currentBrand = searchParams.get("brand");
@@ -87,7 +107,18 @@ const ModernProductFilters = ({
   const currentInStock = searchParams.get("instock");
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-sm p-5 space-y-6">
+    <div className="w-full bg-white rounded-lg shadow-sm p-5 space-y-6 relative">
+      {/* Loading overlay */}
+      {isPending && (
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm font-medium text-stone-600">
+              Applying filters...
+            </span>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-stone-900">Filters</h3>

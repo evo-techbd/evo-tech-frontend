@@ -1,6 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  useCallback,
+  useTransition,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ModernProductsListing } from "@/components/products/modern-products-listing";
 import { ModernProductFilters } from "@/components/product_filters/modern-product-filters";
@@ -38,6 +44,8 @@ const ModernProductsContainer = ({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Persist view mode
   useEffect(() => {
@@ -65,6 +73,19 @@ const ModernProductsContainer = ({
     localStorage.setItem("products-filter-open", JSON.stringify(newState));
   };
 
+  const handleFilterChange = useCallback((isLoading: boolean) => {
+    setIsFilterLoading(isLoading);
+    // Safety timeout: auto-clear after 3 seconds in case navigation gets stuck
+    if (isLoading) {
+      setTimeout(() => setIsFilterLoading(false), 3000);
+    }
+  }, []);
+
+  // Reset loading state when search params change (filter applied)
+  useEffect(() => {
+    setIsFilterLoading(false);
+  }, [searchParams]);
+
   return (
     <div className="w-full h-fit">
       {/* Header with view toggles and filter button */}
@@ -88,13 +109,19 @@ const ModernProductsContainer = ({
             <span className="text-sm font-medium">Filters</span>
           </button>
 
-          <div className="text-sm text-stone-600">
+          <div className="text-sm text-stone-600 flex items-center gap-2">
             <span className="font-semibold text-stone-900">
               {paginationMetaForData.totalItems}
             </span>{" "}
             Products
             {categoryData && (
               <span className="ml-1">in {categoryData.name}</span>
+            )}
+            {(isFilterLoading || isPending) && (
+              <div className="flex items-center gap-1.5 ml-2 text-brand-600">
+                <div className="w-3 h-3 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-medium">Updating...</span>
+              </div>
             )}
           </div>
         </div>
@@ -140,6 +167,7 @@ const ModernProductsContainer = ({
             availableSubcategories={availableSubcategories}
             availableCategories={availableCategories}
             categorySlug={categoryData?.slug}
+            onFilterChange={handleFilterChange}
           />
         </div>
 
@@ -179,6 +207,7 @@ const ModernProductsContainer = ({
                   availableSubcategories={availableSubcategories}
                   availableCategories={availableCategories}
                   categorySlug={categoryData?.slug}
+                  onFilterChange={handleFilterChange}
                 />
               </div>
             </div>
@@ -186,7 +215,19 @@ const ModernProductsContainer = ({
         )}
 
         {/* Products Listing */}
-        <div className="flex-1 w-full h-fit">
+        <div className="flex-1 w-full h-fit relative">
+          {/* Loading overlay */}
+          {(isFilterLoading || isPending) && (
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-sm rounded-lg flex items-center justify-center z-20">
+              <div className="flex flex-col items-center gap-3 bg-white rounded-lg shadow-lg p-6">
+                <div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm font-semibold text-stone-700">
+                  Loading products...
+                </span>
+              </div>
+            </div>
+          )}
+
           <Suspense
             fallback={
               <div className="w-full h-[calc(100vh-200px)] flex items-center justify-center">

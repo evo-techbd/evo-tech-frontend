@@ -118,7 +118,7 @@ const NavbarClient = ({
     setIsSearching(true);
     try {
       const res = await axios.get(
-        `/products?search=${encodeURIComponent(q)}&limit=6`,
+        `/products?search=${encodeURIComponent(q)}&limit=6&published=true`,
       );
       if (res?.data?.data) {
         setSuggestions(res.data.data);

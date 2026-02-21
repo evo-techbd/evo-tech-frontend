@@ -7,11 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateProductSchema } from "@/schemas/admin/product/productschemas";
 import { FileUploader } from "@/components/file_upload/file-uploader";
 import { EvoFormInputError } from "@/components/error/form-input-error";
+import { compressImage, compressImages } from "@/utils/image-compression";
 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/all_utils";
-import { ItemBrandOptions } from "@/dal/product-inputs";
 import { useTaxonomy } from "@/hooks/use-taxonomy";
 import { useFeaturedSections } from "@/hooks/use-featured-sections";
 
@@ -232,167 +232,219 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
   }, [selectedCategory, selectedSubcategory, brands, watch, setValue]);
 
   const onSubmit = async (data: z.infer<typeof UpdateProductSchema>) => {
-    const formdata = new FormData();
+    const compressingToastId = toast.loading("Compressing images...");
 
-    // Send field names matching backend schema
-    formdata.append("name", data.item_name);
-    formdata.append("slug", data.item_slug);
-    formdata.append("price", data.item_price);
-    if (data.item_buyingprice) {
-      formdata.append("buyingPrice", data.item_buyingprice);
-    }
-    formdata.append("previousPrice", data.item_prevprice);
-    formdata.append("inStock", String(Boolean(data.item_instock)));
+    try {
+      const formdata = new FormData();
 
-    // Handle new main image
-    if (data.item_newmainimg && data.item_newmainimg instanceof File) {
-      formdata.append("mainImage", data.item_newmainimg);
-    }
+      // Send field names matching backend schema
+      formdata.append("name", data.item_name);
+      formdata.append("slug", data.item_slug);
+      formdata.append("price", data.item_price);
+      if (data.item_buyingprice) {
+        formdata.append("buyingPrice", data.item_buyingprice);
+      }
+      formdata.append("previousPrice", data.item_prevprice);
+      formdata.append("inStock", String(Boolean(data.item_instock)));
 
-    // Handle setting existing image as main
-    if (data.item_newmainfromexisting) {
-      formdata.append("newMainFromExisting", data.item_newmainfromexisting);
-    }
+      // Handle new main image - compress before upload
+      if (data.item_newmainimg && data.item_newmainimg instanceof File) {
+        const compressedMainImage = await compressImage(data.item_newmainimg, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          initialQuality: 0.8,
+        });
+        formdata.append("mainImage", compressedMainImage);
+      }
 
-    // Handle feature banner selection
-    if (data.item_featurebanner) {
-      formdata.append("featureBanner", data.item_featurebanner);
-    }
+      // Handle setting existing image as main
+      if (data.item_newmainfromexisting) {
+        formdata.append("newMainFromExisting", data.item_newmainfromexisting);
+      }
 
-    // Features array
-    if (data.item_features && data.item_features.length > 0) {
-      data.item_features.forEach((feature: string) => {
-        if (feature && feature.trim()) {
-          formdata.append("features[]", feature);
-        }
-      });
-    }
+      // Handle feature banner selection
+      if (data.item_featurebanner) {
+        formdata.append("featureBanner", data.item_featurebanner);
+      }
 
-    // Colors array
-    // FAQ array (send as JSON string)
-    if (data.item_faq && data.item_faq.length > 0) {
-      formdata.append("faqs", JSON.stringify(data.item_faq));
-    }
+      // Features array
+      if (data.item_features && data.item_features.length > 0) {
+        data.item_features.forEach((feature: string) => {
+          if (feature && feature.trim()) {
+            formdata.append("features[]", feature);
+          }
+        });
+      }
 
-    formdata.append("category", data.item_category);
-    if (data.item_subcategory) {
-      formdata.append("subcategory", data.item_subcategory);
-    }
-    formdata.append("brand", data.item_brand);
-    if (data.item_weight) {
-      formdata.append("weight", data.item_weight);
-    }
-    if (data.landing_section_id) {
-      formdata.append("landingpageSectionId", data.landing_section_id);
-    }
+      // Colors array
+      // FAQ array (send as JSON string)
+      if (data.item_faq && data.item_faq.length > 0) {
+        formdata.append("faqs", JSON.stringify(data.item_faq));
+      }
 
-    // Additional new images
-    console.log("OnSubmit - additional_newimages:", data.additional_newimages);
-    if (data.additional_newimages && Array.isArray(data.additional_newimages)) {
+      formdata.append("category", data.item_category);
+      if (data.item_subcategory) {
+        formdata.append("subcategory", data.item_subcategory);
+      }
+      formdata.append("brand", data.item_brand);
+      if (data.item_weight) {
+        formdata.append("weight", data.item_weight);
+      }
+      if (data.landing_section_id) {
+        formdata.append("landingpageSectionId", data.landing_section_id);
+      }
+
+      // Additional new images - compress before upload
       console.log(
-        `Processing ${data.additional_newimages.length} additional images`,
+        "OnSubmit - additional_newimages:",
+        data.additional_newimages,
       );
-      data.additional_newimages.forEach((file: File) => {
-        console.log("Appending file:", file.name, file.size, file.type);
-        formdata.append("additionalImages", file);
-      });
-    } else {
-      console.log("No additional_newimages found or not an array");
-    }
+      if (
+        data.additional_newimages &&
+        Array.isArray(data.additional_newimages) &&
+        data.additional_newimages.length > 0
+      ) {
+        console.log(
+          `Processing ${data.additional_newimages.length} additional images`,
+        );
 
-    // Images to remove
-    if (
-      data.remove_additional_images &&
-      data.remove_additional_images.length > 0
-    ) {
-      data.remove_additional_images.forEach((imageId: string) => {
-        formdata.append("removeImages[]", imageId);
-      });
-    }
+        // Compress all additional images
+        const compressedAdditionalImages = await compressImages(
+          data.additional_newimages,
+          {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            initialQuality: 0.8,
+          },
+          (current, total) => {
+            toast.loading(`Compressing images... ${current}/${total}`, {
+              id: compressingToastId,
+            });
+          },
+        );
 
-    // New fields - Description & SEO
-    if (data.description) {
-      formdata.append("description", data.description);
-    }
-    if (data.shortDescription) {
-      formdata.append("shortDescription", data.shortDescription);
-    }
-    if (data.sku) {
-      formdata.append("sku", data.sku);
-    }
-
-    // Inventory fields
-    if (data.stock !== undefined && data.stock !== null && data.stock !== "") {
-      formdata.append("stock", data.stock.toString());
-    }
-    if (
-      data.lowStockThreshold !== undefined &&
-      data.lowStockThreshold !== null &&
-      data.lowStockThreshold !== ""
-    ) {
-      formdata.append("lowStockThreshold", data.lowStockThreshold.toString());
-    }
-
-    // Boolean flags
-    if (data.isFeatured !== undefined) {
-      formdata.append("isFeatured", String(Boolean(data.isFeatured)));
-    }
-    if (data.published !== undefined) {
-      formdata.append("published", String(Boolean(data.published)));
-    }
-
-    // Pre-order fields
-    if (data.isPreOrder !== undefined) {
-      formdata.append("isPreOrder", String(Boolean(data.isPreOrder)));
-    }
-    if (data.isPreOrder && data.preOrderDate) {
-      formdata.append("preOrderDate", data.preOrderDate);
-    }
-    if (data.isPreOrder && data.preOrderPrice) {
-      formdata.append("preOrderPrice", data.preOrderPrice.toString());
-    }
-
-    // SEO fields
-    if (data.seoTitle) {
-      formdata.append("seoTitle", data.seoTitle);
-    }
-    if (data.seoDescription) {
-      formdata.append("seoDescription", data.seoDescription);
-    }
-
-    const response = await axios
-      .put(`/api/admin/products/${itemInfo.itemid}`, formdata, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        withCredentials: true,
-      })
-      .then((res) => {
-        return res.data;
-      })
-      .catch((error: any) => {
-        if (error.response) {
-          toast.error(
-            error.response.data.message
-              ? error.response.data.message
-              : "Something went wrong",
+        compressedAdditionalImages.forEach((file: File) => {
+          console.log(
+            "Appending compressed file:",
+            file.name,
+            file.size,
+            file.type,
           );
-        } else {
-          toast.error("Something went wrong");
-        }
-        return null;
-      });
+          formdata.append("additionalImages", file);
+        });
+      } else {
+        console.log("No additional_newimages found or not an array");
+      }
 
-    if (response) {
-      toast.success(
-        response.message ||
-        `Item '${response.item_name || itemInfo.i_name}' updated`,
+      // Done compressing
+      toast.dismiss(compressingToastId);
+
+      // Images to remove
+      if (
+        data.remove_additional_images &&
+        data.remove_additional_images.length > 0
+      ) {
+        data.remove_additional_images.forEach((imageId: string) => {
+          formdata.append("removeImages[]", imageId);
+        });
+      }
+
+      // New fields - Description & SEO
+      if (data.description) {
+        formdata.append("description", data.description);
+      }
+      if (data.shortDescription) {
+        formdata.append("shortDescription", data.shortDescription);
+      }
+      if (data.sku) {
+        formdata.append("sku", data.sku);
+      }
+
+      // Inventory fields
+      if (
+        data.stock !== undefined &&
+        data.stock !== null &&
+        data.stock !== ""
+      ) {
+        formdata.append("stock", data.stock.toString());
+      }
+      if (
+        data.lowStockThreshold !== undefined &&
+        data.lowStockThreshold !== null &&
+        data.lowStockThreshold !== ""
+      ) {
+        formdata.append("lowStockThreshold", data.lowStockThreshold.toString());
+      }
+
+      // Boolean flags
+      if (data.isFeatured !== undefined) {
+        formdata.append("isFeatured", String(Boolean(data.isFeatured)));
+      }
+      if (data.published !== undefined) {
+        formdata.append("published", String(Boolean(data.published)));
+      }
+
+      // Pre-order fields
+      if (data.isPreOrder !== undefined) {
+        formdata.append("isPreOrder", String(Boolean(data.isPreOrder)));
+      }
+      if (data.isPreOrder && data.preOrderDate) {
+        formdata.append("preOrderDate", data.preOrderDate);
+      }
+      if (data.isPreOrder && data.preOrderPrice) {
+        formdata.append("preOrderPrice", data.preOrderPrice.toString());
+      }
+
+      // SEO fields
+      if (data.seoTitle) {
+        formdata.append("seoTitle", data.seoTitle);
+      }
+      if (data.seoDescription) {
+        formdata.append("seoDescription", data.seoDescription);
+      }
+
+      const response = await axios
+        .put(`/api/admin/products/${itemInfo.itemid}`, formdata, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          withCredentials: true,
+        })
+        .then((res) => {
+          return res.data;
+        })
+        .catch((error: any) => {
+          if (error.response) {
+            toast.error(
+              error.response.data.message
+                ? error.response.data.message
+                : "Something went wrong",
+            );
+          } else {
+            toast.error("Something went wrong");
+          }
+          return null;
+        });
+
+      if (response) {
+        toast.success(
+          response.message ||
+            `Item '${response.item_name || itemInfo.i_name}' updated`,
+        );
+        // router.replace(`/control/products/update/${response.item_slug}`, { scroll: false }); // because slug can also be changed
+        router.push(`/control/products`, {
+          scroll: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error in product update:", error);
+      toast.dismiss(compressingToastId);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update product. Please try again.",
       );
-      // router.replace(`/control/products/update/${response.item_slug}`, { scroll: false }); // because slug can also be changed
-      router.push(`/control/products`, {
-        scroll: true,
-      });
     }
   };
 
@@ -435,8 +487,9 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
             return (
               <div
                 key={image.imgid}
-                className={`relative w-full h-32 group ${isRemoved ? "opacity-35" : ""
-                  }`}
+                className={`relative w-full h-32 group ${
+                  isRemoved ? "opacity-35" : ""
+                }`}
               >
                 <Image
                   src={image.imgsrc}
@@ -519,7 +572,9 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
             {`New Main Image `}
             <span className="text-gray-500 text-xs">{`(optional)`}</span>
           </label>
-          <p className="text-[0.6875rem] leading-3 text-muted-foreground">{`(only jpeg/png/jpg/webp)`}</p>
+          <p className="text-[0.6875rem] leading-3 text-muted-foreground">
+            {`Max 10MB - Will be compressed to WebP (recommended: under 5MB)`}
+          </p>
           <div>
             <Controller
               control={control}
@@ -565,7 +620,9 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
             {`Add More Images `}
             <span className="text-gray-500 text-xs">{`(optional)`}</span>
           </label>
-          <p className="text-[0.6875rem] leading-3 text-muted-foreground">{`(only jpeg/png/jpg/webp)`}</p>
+          <p className="text-[0.6875rem] leading-3 text-muted-foreground">
+            {`Max 10MB - Will be compressed to WebP (recommended: under 5MB)`}
+          </p>
           <div>
             <Controller
               control={control}
@@ -729,7 +786,7 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
         {errors.description && (
           <EvoFormInputError>{errors.description.message}</EvoFormInputError>
         )}
-        
+
         {/* Update Button after Description */}
         <div className="mt-3 flex justify-end">
           <button
@@ -742,7 +799,7 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
         </div>
       </div>
 
-      {/* Short Description */
+      {/* Short Description */}
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1.5">
           Short Description{" "}
@@ -762,7 +819,6 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
         )}
       </div>
 
-      {/* Inventory Section */}
       <div className="p-4 bg-blue-50/50 rounded-lg border border-blue-200 space-y-4">
         <h3 className="text-sm font-semibold text-stone-800">
           Inventory Management
@@ -1029,7 +1085,7 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
             {(errors.item_features as any).message}
           </EvoFormInputError>
         )}
-        
+
         {/* Update Button after Features */}
         <div className="mt-3 flex justify-end">
           <button
