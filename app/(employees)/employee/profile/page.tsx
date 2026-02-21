@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
