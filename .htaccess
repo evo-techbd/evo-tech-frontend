@@ -1,0 +1,19 @@
+# Hostinger .htaccess configuration for Next.js
+# This file helps route traffic to your Node.js application
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Proxy requests to Node.js server running on port 3000
+  # Adjust the port if you're using a different one
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>
