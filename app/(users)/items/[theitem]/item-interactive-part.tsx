@@ -26,6 +26,15 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   const [realTimeColorVariations, setRealTimeColorVariations] = useState<any[]>(
     singleitem.i_colorVariations || []
   );
+  const [selectedColor, setSelectedColor] = useState<string>(searchParams.get("color") || "");
+
+  // Sync selected color with URL param when it changes (e.g., browser back/forward)
+  useEffect(() => {
+    const urlColor = searchParams.get("color") || "";
+    if (urlColor !== selectedColor) {
+      setSelectedColor(urlColor);
+    }
+  }, [searchParams]);
 
   // Fetch real-time stock data for color variations
   useEffect(() => {
@@ -63,7 +72,8 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     [searchParams]
   );
 
-  const itemColorfromURL = searchParams.get("color") || "";
+  // Use local state for color selection instead of URL param for better performance
+  const itemColorfromURL = selectedColor;
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -99,9 +109,13 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     window.dispatchEvent(event);
   };
 
-  const handleColorSelect = (selectedColor: string) => {
-    const newQueryString = createQueryString("color", selectedColor);
-    router.replace(`${pathName}?${newQueryString}`, { scroll: false });
+  const handleColorSelect = (color: string) => {
+    // Update local state immediately for instant response
+    setSelectedColor(color);
+    
+    // Update URL in background without triggering re-render
+    const newQueryString = createQueryString("color", color);
+    window.history.replaceState(null, '', `${pathName}?${newQueryString}`);
   };
 
   const handleAddToCart = () => {
@@ -468,10 +482,10 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     <div className="flex flex-col w-full h-fit gap-2">
       {formattedColors.length > 0 && (
         <div className="relative flex flex-col w-full h-fit my-2 gap-3">
-          <span className="w-fit h-fit text-[13px] md:text-[14px] leading-5 tracking-tight font-[600]">{`Color:`}</span>
+          <span className="w-fit h-fit text-[13px] md:text-[14px] leading-5 tracking-tight font-[600]">{`Color: ${selectedColor || 'Select a color'}`}</span>
           <ColorSelector
             colors={formattedColors}
-            selectedColor={itemColorfromURL}
+            selectedColor={selectedColor}
             onColorSelect={handleColorSelect}
           />
           {hasColorVariations && itemColorfromURL && (

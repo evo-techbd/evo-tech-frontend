@@ -359,7 +359,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
         )}
 
         {/* Price */}
-        <div className="flex flex-col gap-0.5 mt-auto mb-1">
+        <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 mt-auto mb-1 flex-wrap">
           {product.i_preorderprice && product.i_ispreorder && product.i_preorderprice < product.i_price ? (
             <>
               <span className="text-sm sm:text-base font-bold text-cyan-600">
@@ -519,26 +519,6 @@ const ProductListCard = ({ product }: { product: any }) => {
           {product.i_name}
         </h3>
 
-        {/* Rating */}
-        {product.i_rating > 0 && (
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <FiStar
-                  key={i}
-                  className={`w-4 h-4 ${i < Math.floor(product.i_rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-stone-300"
-                    }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-stone-500">
-              {product.i_rating.toFixed(1)} ({product.i_reviewCount} reviews)
-            </span>
-          </div>
-        )}
-
         {/* Description */}
         {product.i_description && (
           <p className="text-sm text-stone-600 mb-4 line-clamp-2">
@@ -565,13 +545,13 @@ const ProductListCard = ({ product }: { product: any }) => {
 
         {/* Price and Action */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-auto">
-          <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3 flex-wrap">
             {product.i_preorderprice && product.i_ispreorder && product.i_preorderprice < product.i_price ? (
               <>
                 <span className="text-2xl font-bold text-cyan-600">
                   BDT {product.i_preorderprice.toLocaleString()}
                 </span>
-                <span className="text-base text-red-500 line-through">
+                <span className="text-2xl font-bold text-red-500 line-through">
                   BDT {product.i_price.toLocaleString()}
                 </span>
               </>
@@ -581,7 +561,7 @@ const ProductListCard = ({ product }: { product: any }) => {
                   BDT {product.i_price.toLocaleString()}
                 </span>
                 {product.i_prevprice > product.i_price && (
-                  <span className="text-base text-stone-400 line-through">
+                  <span className="text-2xl font-bold text-stone-400 line-through">
                     BDT {product.i_prevprice.toLocaleString()}
                   </span>
                 )}

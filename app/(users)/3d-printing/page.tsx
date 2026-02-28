@@ -287,7 +287,14 @@ const ThreeDPrintingPage = () => {
                           or click to browse your computer
                         </p>
                         <button className="px-6 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors">
-                          Select File
+                         <a
+                      href="https://www.facebook.com/3DPrintBD22"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg w-full justify-center"
+                    >
+                      Select File
+                    </a>
                         </button>
                       </div>
                     </div>

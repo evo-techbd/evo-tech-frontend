@@ -228,3 +228,24 @@ end of components/carousels/bannercarousel.tsx
 .ring-emerald-600 {
   box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15) !important;
 }
+
+/* Prevent scroll behavior on number inputs */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Prevent scroll change on focused number inputs */
+input[type="number"]:focus {
+  pointer-events: auto;
+}
+
+/* Default step for integer-only number inputs */
+input[type="number"]:not([step]) {
+  step: 1;
+}

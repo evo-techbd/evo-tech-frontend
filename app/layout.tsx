@@ -8,6 +8,7 @@ import { backAPIURL } from "@/lib/env-vars";
 import { TaxonomyProvider } from "@/components/providers/taxonomy-provider";
 import type { TaxonomyCategory } from "@/store/slices/taxonomySlice";
 import { ConditionalLayout } from "@/components/layout/conditional-layout";
+import { PreventNumberScroll } from "@/components/prevent-number-scroll";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com'),
@@ -190,6 +191,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode; }) => {
             </ConditionalLayout>
             <ScrollBacktoTop />
             <EvoToaster />
+            <PreventNumberScroll />
             <div id="modal-root"></div>
           </TaxonomyProvider>
         </Providers>

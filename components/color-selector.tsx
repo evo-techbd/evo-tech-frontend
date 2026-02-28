@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { Tooltip } from "@nextui-org/tooltip";
 
 type ColorOption = {
     name: string;  // Name of the color
@@ -70,28 +69,24 @@ const ColorSelector = memo(({ colors, selectedColor, onColorSelect }: ColorSelec
     };
 
     return (
-        <div className="flex flex-wrap items-center w-full h-fit gap-3">
+        <div className="flex flex-wrap items-start w-full h-fit gap-4">
             {parsedColors.map((coloroption, idx) => (
-                <Tooltip key={`color_${idx}`}
-                    showArrow
-                    placement="top"
-                    delay={100}
-                    closeDelay={50}
-                    offset={6}
-                    classNames={{
-                        base: "w-fit h-fit rounded-[10px] bg-transparent before:bg-stone-800",
-                        content: "min-w-[80px] w-fit max-w-[200px] h-fit py-1 px-3 text-white bg-gradient-to-b from-stone-400 to-stone-800 font-inter text-[11px] sm:text-[12px] leading-5 font-[500]",
-                    }}
-                    content={coloroption.name}
-                    className="w-fit rounded-[10px] bg-transparent capitalize shadow-md"
+                <div 
+                    key={`color_${idx}`}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer"
+                    onClick={() => handleColorClick(coloroption)}
                 >
                     <div
-                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full cursor-pointer border-2 border-white ring-2 ${isColorSelected(coloroption.name) ? 'ring-stone-700' : 'ring-stone-300'}`}
+                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer border-2 border-white ring-2 transition-all duration-200 ${isColorSelected(coloroption.name) ? 'ring-brand-600 ring-offset-2 scale-110' : 'ring-stone-300 hover:ring-stone-400'}`}
                         style={{ backgroundColor: coloroption.hex }}
-                        onClick={() => handleColorClick(coloroption)}
                     >
                     </div>
-                </Tooltip>
+                    <span className={`text-[10px] sm:text-[11px] font-medium capitalize max-w-[60px] text-center leading-tight ${
+                        isColorSelected(coloroption.name) ? 'text-brand-700' : 'text-stone-600'
+                    }`}>
+                        {coloroption.name}
+                    </span>
+                </div>
             ))}
         </div>
     );
