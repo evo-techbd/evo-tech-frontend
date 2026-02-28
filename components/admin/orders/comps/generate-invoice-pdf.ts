@@ -37,7 +37,17 @@ const formatShippingType = (type: string): string => {
     return types[type] || type;
 };
 
-const getPickupPointAddress = (pickupPointId: string | number | null): string => {
+const getPickupPointAddress = (
+    pickupPointId: string | number | null | { name: string; address: string; city?: string; phone?: string }
+): string => {
+    // If it's a populated object, format it nicely
+    if (pickupPointId && typeof pickupPointId === 'object') {
+        return `${pickupPointId.name} - ${pickupPointId.address}${
+            pickupPointId.city ? `, ${pickupPointId.city}` : ''
+        }`;
+    }
+    
+    // Otherwise, use the hardcoded lookup for backward compatibility
     const pickupPoints: { [key: string]: string } = {
         '101': '65/15, Shwapnokunzo, Tonartek, Vashantek, Dhaka Cantt., Dhaka-1206',
     };
@@ -239,7 +249,6 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
             // Format address properly
             const addressLines = [
                 `House/Street: ${sanitizeText(order.houseStreet)}`,
-                `Thana: ${sanitizeText(order.subdistrict)}`,
                 `District: ${sanitizeText(order.city)}`,
                 ...(order.postcode
                     ? [`Postcode: ${sanitizeText(order.postcode)}`]

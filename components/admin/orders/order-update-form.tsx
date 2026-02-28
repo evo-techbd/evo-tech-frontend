@@ -83,16 +83,19 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
         const finalAmountPaid = data.amountPaid + (payAmount || 0);
         updateData.amountPaid = finalAmountPaid;
 
-        // Auto-calculate payment status based on amount paid
-        const total = data.totalPayable || orderData.totalPayable;
-        const paid = finalAmountPaid;
+        // Only auto-calculate payment status if not manually set by admin
+        // and if the current payment status is one of the auto-calculated ones
+        if (data.paymentStatus === undefined) {
+          const total = data.totalPayable || orderData.totalPayable;
+          const paid = finalAmountPaid;
 
-        if (paid >= total) {
-          updateData.paymentStatus = "paid";
-        } else if (paid > 0) {
-          updateData.paymentStatus = "partial";
-        } else {
-          updateData.paymentStatus = "pending";
+          if (paid >= total) {
+            updateData.paymentStatus = "paid";
+          } else if (paid > 0) {
+            updateData.paymentStatus = "partial";
+          } else {
+            updateData.paymentStatus = "pending";
+          }
         }
       }
 
@@ -106,9 +109,8 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
-
 
       if (response.data.success) {
         toast.success(response.data.message || "Order updated successfully");

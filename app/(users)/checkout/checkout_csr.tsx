@@ -40,6 +40,10 @@ import { applyCoupon, removeCoupon } from "@/store/slices/discountSlice";
 import { summarizeCartStock, assessCartItemStock } from "@/utils/cart-stock";
 import { HiMiniExclamationTriangle } from "react-icons/hi2";
 import { PiInfoBold } from "react-icons/pi";
+import {
+  PickupPointListSchema,
+  type PickupPointDisplayType,
+} from "@/schemas/admin/setupconfig/homepage/pickupPoint/pickupPointSchema";
 
 type CheckoutFormValuesType = z.infer<typeof checkoutSchema>;
 
@@ -48,6 +52,10 @@ const CheckoutParts = () => {
   const [deliveryCharge, setDeliveryCharge] = useState<number | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [pickupPoints, setPickupPoints] = useState<PickupPointDisplayType[]>(
+    [],
+  );
+  const [isLoadingPickupPoints, setIsLoadingPickupPoints] = useState(false);
   const cartItems = useSelector(
     (state: RootState) => state.shoppingcart.cartdata,
   );
@@ -105,6 +113,28 @@ const CheckoutParts = () => {
     }
   }, [errors]);
 
+  // Fetch active pickup points
+  useEffect(() => {
+    const fetchPickupPoints = async () => {
+      setIsLoadingPickupPoints(true);
+      try {
+        const response = await axios.get("/pickup-points/active");
+        const parsedPickupPoints = PickupPointListSchema.parse(
+          response.data?.data ?? [],
+        );
+        setPickupPoints(parsedPickupPoints);
+      } catch (error) {
+        console.error("Failed to fetch pickup points:", error);
+        axiosErrorLogger({ error });
+        setPickupPoints([]);
+      } finally {
+        setIsLoadingPickupPoints(false);
+      }
+    };
+
+    fetchPickupPoints();
+  }, []);
+
   const {
     cartSubTotal,
     chargeforWeight,
@@ -123,7 +153,11 @@ const CheckoutParts = () => {
 
   const totalPayableAmount = useMemo(() => {
     return (
-      cartSubTotal + (deliveryCharge ?? 0) + codCharge + bKashCharge - (discountAmount ?? 0)
+      cartSubTotal +
+      (deliveryCharge ?? 0) +
+      codCharge +
+      bKashCharge -
+      (discountAmount ?? 0)
     );
   }, [cartSubTotal, deliveryCharge, codCharge, bKashCharge, discountAmount]);
 
@@ -389,7 +423,7 @@ const CheckoutParts = () => {
         "";
       toast.error(
         backendMessage ||
-        "Sorry! Order could not be placed. Please review your cart and try again.",
+          "Sorry! Order could not be placed. Please review your cart and try again.",
       );
     }
   };
@@ -524,46 +558,47 @@ const CheckoutParts = () => {
     <>
       {(cartStockSummary.hasBlockingIssues ||
         cartStockSummary.warningIssues.length > 0) && (
-          <div className="flex w-full flex-col gap-3 rounded-md border border-stone-200 bg-white/60 p-4 mb-2">
-            {cartStockSummary.hasBlockingIssues && (
-              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex w-full flex-col gap-3 rounded-md border border-stone-200 bg-white/60 p-4 mb-2">
+          {cartStockSummary.hasBlockingIssues && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p className="flex items-center gap-2 text-[13px] font-semibold">
+                <HiMiniExclamationTriangle className="h-4 w-4" />
+                Resolve stock issues to place your order
+              </p>
+              <ul className="mt-2 space-y-1 text-[12px]">
+                {cartStockSummary.blockingIssues.map((issue) => (
+                  <li key={`checkout-stock-blocker-${issue.itemId}`}>
+                    <span className="font-semibold">{issue.itemName}</span>{" "}
+                    {issue.isOutOfStock
+                      ? "is currently out of stock."
+                      : `has only ${issue.availableStock ?? 0} unit${
+                          (issue.availableStock ?? 0) === 1 ? "" : "s"
+                        } left. Please lower the quantity.`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {!cartStockSummary.hasBlockingIssues &&
+            cartStockSummary.warningIssues.length > 0 && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                 <p className="flex items-center gap-2 text-[13px] font-semibold">
-                  <HiMiniExclamationTriangle className="h-4 w-4" />
-                  Resolve stock issues to place your order
+                  <PiInfoBold className="h-4 w-4" />
+                  Low stock reminder
                 </p>
                 <ul className="mt-2 space-y-1 text-[12px]">
-                  {cartStockSummary.blockingIssues.map((issue) => (
-                    <li key={`checkout-stock-blocker-${issue.itemId}`}>
+                  {cartStockSummary.warningIssues.map((issue) => (
+                    <li key={`checkout-stock-warning-${issue.itemId}`}>
                       <span className="font-semibold">{issue.itemName}</span>{" "}
-                      {issue.isOutOfStock
-                        ? "is currently out of stock."
-                        : `has only ${issue.availableStock ?? 0} unit${(issue.availableStock ?? 0) === 1 ? "" : "s"
-                        } left. Please lower the quantity.`}
+                      {`has only ${issue.availableStock ?? 0} left.`}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-
-            {!cartStockSummary.hasBlockingIssues &&
-              cartStockSummary.warningIssues.length > 0 && (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  <p className="flex items-center gap-2 text-[13px] font-semibold">
-                    <PiInfoBold className="h-4 w-4" />
-                    Low stock reminder
-                  </p>
-                  <ul className="mt-2 space-y-1 text-[12px]">
-                    {cartStockSummary.warningIssues.map((issue) => (
-                      <li key={`checkout-stock-warning-${issue.itemId}`}>
-                        <span className="font-semibold">{issue.itemName}</span>{" "}
-                        {`has only ${issue.availableStock ?? 0} left.`}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-          </div>
-        )}
+        </div>
+      )}
 
       <div className="relative flex flex-col items-center md:flex-row md:justify-start md:items-start w-full h-fit gap-5">
         <form
@@ -681,14 +716,15 @@ const CheckoutParts = () => {
                       <button
                         type="button"
                         aria-label={`city or district`}
-                        className={`peer/city relative z-[0] flex items-center w-full h-[40px] text-[12px] leading-4 font-[500] ${field.value ? `text-stone-900` : `text-stone-400`
-                          } px-2 py-1 bg-stone-100 border rounded-[4px] border-stone-400 border-t-transparent overflow-hidden focus-visible:outline-none focus-visible:border-x-[#0866FF] focus-visible:border-t-transparent focus-visible:border-b-[#0866FF] hover:border-x-[#0866FF] hover:border-t-transparent hover:border-b-[#0866FF]`}
+                        className={`peer/city relative z-[0] flex items-center w-full h-[40px] text-[12px] leading-4 font-[500] ${
+                          field.value ? `text-stone-900` : `text-stone-400`
+                        } px-2 py-1 bg-stone-100 border rounded-[4px] border-stone-400 border-t-transparent overflow-hidden focus-visible:outline-none focus-visible:border-x-[#0866FF] focus-visible:border-t-transparent focus-visible:border-b-[#0866FF] hover:border-x-[#0866FF] hover:border-t-transparent hover:border-b-[#0866FF]`}
                       >
                         <p className="w-full h-fit text-left truncate capitalize">
                           {field.value
                             ? districtsOfBD.find(
-                              (district) => district.key === field.value,
-                            )?.itemvalue
+                                (district) => district.key === field.value,
+                              )?.itemvalue
                             : `Select city/district`}
                         </p>
                         <div className="absolute z-0 inset-y-0 right-0 flex items-center w-fit px-1 py-1 bg-stone-100">
@@ -719,17 +755,19 @@ const CheckoutParts = () => {
                                     field.onChange(districtItem.key);
                                     handleCitySelection(districtItem.key);
                                   }}
-                                  className={`font-[500] tracking-tight ${districtItem.key === field.value
+                                  className={`font-[500] tracking-tight ${
+                                    districtItem.key === field.value
                                       ? "text-[#0866FF]"
                                       : "text-stone-600"
-                                    }`}
+                                  }`}
                                 >
                                   {districtItem.itemvalue}
                                   <IoCheckmark
-                                    className={`inline w-4 h-4 ml-auto ${districtItem.key === field.value
+                                    className={`inline w-4 h-4 ml-auto ${
+                                      districtItem.key === field.value
                                         ? "text-[#0866FF] opacity-100"
                                         : "text-transparent opacity-0"
-                                      }`}
+                                    }`}
                                   />
                                 </CommandItem>
                               ))}
@@ -863,21 +901,53 @@ const CheckoutParts = () => {
                   Select Pickup Point:
                 </h4>
 
-                <div className="flex items-center w-full h-fit py-1">
-                  <input
-                    type="radio"
-                    id="pickup_101"
-                    {...register("pickupPointId")}
-                    value="101"
-                    className="mr-2 accent-stone-800"
-                  />
-                  <label
-                    htmlFor="pickup_101"
-                    className="text-[11px] sm:text-[12px] font-[500] text-stone-600"
-                  >
-                    {`65/15, Shwapnokunzo, Tonartek, Vashantek, Dhaka Cantt., Dhaka-1206`}
-                  </label>
-                </div>
+                {isLoadingPickupPoints ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="size-4 border border-t-stone-700 border-b-stone-300 animate-spin rounded-full" />
+                  </div>
+                ) : pickupPoints.length === 0 ? (
+                  <div className="text-[11px] sm:text-[12px] text-stone-500 py-2">
+                    No pickup points available at the moment.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {pickupPoints.map((point) => (
+                      <div
+                        key={point._id}
+                        className="flex items-start w-full h-fit py-1"
+                      >
+                        <input
+                          type="radio"
+                          id={`pickup_${point._id}`}
+                          {...register("pickupPointId")}
+                          value={point._id}
+                          className="mr-2 mt-1 accent-stone-800"
+                        />
+                        <label
+                          htmlFor={`pickup_${point._id}`}
+                          className="text-[11px] sm:text-[12px] font-[500] text-stone-600 cursor-pointer flex-1"
+                        >
+                          <div className="font-[600]">{point.name}</div>
+                          <div>{point.address}</div>
+                          {(point.city || point.phone || point.hours) && (
+                            <div className="text-[10px] text-stone-500 mt-1">
+                              {point.city && <span>{point.city}</span>}
+                              {point.phone && (
+                                <span>
+                                  {point.city ? " • " : ""}
+                                  {point.phone}
+                                </span>
+                              )}
+                              {point.hours && (
+                                <span className="block">{point.hours}</span>
+                              )}
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {errors.pickupPointId && (
                   <EvoFormInputError>
@@ -1160,10 +1230,11 @@ const CheckoutParts = () => {
           <button
             type="submit"
             disabled={isPlaceOrderDisabled}
-            className={`w-full h-[44px] flex items-center justify-center px-6 py-2 mt-3 text-[13px] sm:text-[14px] leading-5 font-[600] text-white rounded-[4px] transition-colors duration-100 ${isPlaceOrderDisabled
+            className={`w-full h-[44px] flex items-center justify-center px-6 py-2 mt-3 text-[13px] sm:text-[14px] leading-5 font-[600] text-white rounded-[4px] transition-colors duration-100 ${
+              isPlaceOrderDisabled
                 ? "bg-stone-700 cursor-not-allowed"
                 : "bg-stone-900 hover:bg-stone-800"
-              }`}
+            }`}
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
@@ -1228,10 +1299,11 @@ const CheckoutParts = () => {
 
                   <div className="flex flex-col w-full h-fit py-1">
                     <h4 className="text-[11px] sm:text-[12px] leading-4 font-[600] text-stone-800">
-                      {`${eachCartItem.item_name}${eachCartItem.item_color
+                      {`${eachCartItem.item_name}${
+                        eachCartItem.item_color
                           ? ` (${eachCartItem.item_color})`
                           : ""
-                        }`}
+                      }`}
                     </h4>
                     <p className="text-[10px] sm:text-[11px] leading-4 font-[500] text-stone-600">
                       {`${eachCartItem.item_quantity} x ${currencyFormatBDT(

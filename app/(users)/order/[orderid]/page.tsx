@@ -331,11 +331,14 @@ const OrderConfirmationPage = async ({
               {getOrderDetails.orderdata.pickup_point_id && (
                 <p className="w-full h-fit">
                   <span className="text-evoAdminPrimary font-semibold">{`Pickup Point: `}</span>
-                  {`${
-                    pickupPoints[
-                      getOrderDetails.orderdata.pickup_point_id.toString()
-                    ]
-                  }`}
+                  {typeof getOrderDetails.orderdata.pickup_point_id === "string"
+                    ? pickupPoints[getOrderDetails.orderdata.pickup_point_id] || 
+                      getOrderDetails.orderdata.pickup_point_id
+                    : `${getOrderDetails.orderdata.pickup_point_id.name} - ${getOrderDetails.orderdata.pickup_point_id.address}${
+                        getOrderDetails.orderdata.pickup_point_id.city 
+                          ? `, ${getOrderDetails.orderdata.pickup_point_id.city}` 
+                          : ""
+                      }`}
                 </p>
               )}
 
@@ -402,10 +405,10 @@ const OrderConfirmationPage = async ({
                     <span className="text-evoAdminPrimary font-semibold">{`District: `}</span>
                     {`${getOrderDetails.orderdata.city}`}
                   </p>
-                  <p className="w-full h-fit">
+                  {/* <p className="w-full h-fit">
                     <span className="text-evoAdminPrimary font-semibold">{`Thana: `}</span>
                     {`${getOrderDetails.orderdata.subdistrict}`}
-                  </p>
+                  </p> */}
                   {getOrderDetails.orderdata.postcode && (
                     <p className="w-full h-fit">
                       <span className="text-evoAdminPrimary font-semibold">{`Postcode: `}</span>

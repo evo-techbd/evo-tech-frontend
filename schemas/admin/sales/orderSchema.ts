@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+// Pickup point details when populated
+export const pickupPointSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  address: z.string(),
+  city: z.string().optional(),
+  phone: z.string().optional(),
+  hours: z.string().optional(),
+});
+
 export const orderSchema = z.object({
   _id: z.string().optional(),
   orderNumber: z.string(),
@@ -14,7 +24,7 @@ export const orderSchema = z.object({
   postcode: z.string(),
   country: z.string(),
   shippingType: z.string(),
-  pickupPointId: z.string().optional(),
+  pickupPointId: z.union([z.string(), pickupPointSchema]).optional(), // Can be string ID or populated object
   paymentMethod: z.string(),
   transactionId: z.string().optional(),
   terms: z.boolean(),
@@ -82,6 +92,7 @@ export const orderStatusesUpdateSchema = z.object({
 export type OrderType = z.infer<typeof orderSchema>;
 export type OrderedItemType = z.infer<typeof orderedItemSchema>;
 export type OrderStatusesUpdateType = z.infer<typeof orderStatusesUpdateSchema>;
+export type PickupPointType = z.infer<typeof pickupPointSchema>;
 
 export type OrderWithItemsType = OrderType & {
   orderItems?: OrderedItemType[];

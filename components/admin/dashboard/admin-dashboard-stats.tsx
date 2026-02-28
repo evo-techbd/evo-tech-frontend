@@ -3,6 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DollarSign,
   ShoppingCart,
   Users,
@@ -24,6 +30,14 @@ interface DashboardStats {
   ordersGrowth: number;
   customersGrowth: number;
   productsGrowth: number;
+  orderBreakdown?: {
+    pending: number;
+    confirmed: number;
+    processing: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+  };
 }
 
 export function AdminDashboardStats() {
@@ -39,6 +53,14 @@ export function AdminDashboardStats() {
     ordersGrowth: 0,
     customersGrowth: 0,
     productsGrowth: 0,
+    orderBreakdown: {
+      pending: 0,
+      confirmed: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+    },
   });
   const [loading, setLoading] = useState(true);
 
@@ -133,16 +155,58 @@ export function AdminDashboardStats() {
       <StatCard
         title="Total Profit"
         value={stats.totalProfit}
-        icon={TrendingUp} // Or Banknote/Wallet if available, using TrendingUp as placeholder or check imports
+        icon={TrendingUp}
         growth={stats.profitGrowth}
         format="currency"
       />
-      <StatCard
-        title="Total Orders"
-        value={stats.totalOrders}
-        icon={ShoppingCart}
-        growth={stats.ordersGrowth}
-      />
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <StatCard
+                title="Total Orders"
+                value={stats.totalOrders}
+                icon={ShoppingCart}
+                growth={stats.ordersGrowth}
+              />
+            </div>
+          </TooltipTrigger>
+          {stats.orderBreakdown && (
+            <TooltipContent
+              side="bottom"
+              className="bg-white border border-stone-200 shadow-lg p-3 text-stone-900"
+            >
+              <div className="space-y-1.5 text-xs min-w-[200px]">
+                <div className="font-semibold mb-2 text-sm">Order Status Breakdown</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-600">Confirmed:</span>
+                  <span className="font-semibold text-green-600">{stats.orderBreakdown.confirmed}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-600">Processing:</span>
+                  <span className="font-semibold text-blue-600">{stats.orderBreakdown.processing}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-600">Shipped:</span>
+                  <span className="font-semibold text-purple-600">{stats.orderBreakdown.shipped}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-600">Delivered:</span>
+                  <span className="font-semibold text-emerald-600">{stats.orderBreakdown.delivered}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-600">Pending:</span>
+                  <span className="font-semibold text-yellow-600">{stats.orderBreakdown.pending}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-600">Cancelled:</span>
+                  <span className="font-semibold text-red-600">{stats.orderBreakdown.cancelled}</span>
+                </div>
+              </div>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
       <StatCard
         title="Total Customers"
         value={stats.totalCustomers}

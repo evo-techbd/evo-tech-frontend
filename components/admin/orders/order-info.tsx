@@ -15,10 +15,12 @@ const shippingTypes: { [key: string]: string } = {
   home_delivery: "Home Delivery",
   pickup_point: "Pickup Point",
   express_delivery: "Express Delivery",
+  regular_delivery: "Regular Delivery"
 };
 
 const paymentMethods: { [key: string]: string } = {
   cash_on_delivery: "Cash on Delivery",
+  cod:"Cash On Delivery",
   bkash: "bKash",
   nagad: "Nagad",
   credit_card: "Credit Card",
@@ -141,10 +143,10 @@ const OrderInfo = ({ orderData }: { orderData: OrderWithItemsType }) => {
                 <span className="text-evoAdminPrimary font-semibold">{`District: `}</span>
                 {`${orderData.city}`}
               </p>
-              <p className="w-full h-fit">
+              {/* <p className="w-full h-fit">
                 <span className="text-evoAdminPrimary font-semibold">{`Thana: `}</span>
                 {`${orderData.subdistrict}`}
-              </p>
+              </p> */}
               {orderData.postcode && (
                 <p className="w-full h-fit">
                   <span className="text-evoAdminPrimary font-semibold">{`Postcode: `}</span>
@@ -182,10 +184,14 @@ const OrderInfo = ({ orderData }: { orderData: OrderWithItemsType }) => {
               {orderData.pickupPointId && (
                 <div>
                   <span className="text-evoAdminPrimary font-semibold">{`Pickup Point: `}</span>
-                  {`${
-                    pickupPoints[orderData.pickupPointId.toString()] ||
-                    orderData.pickupPointId
-                  }`}
+                  {typeof orderData.pickupPointId === "string"
+                    ? pickupPoints[orderData.pickupPointId] ||
+                      orderData.pickupPointId
+                    : `${orderData.pickupPointId.name} - ${orderData.pickupPointId.address}${
+                        orderData.pickupPointId.city
+                          ? `, ${orderData.pickupPointId.city}`
+                          : ""
+                      }`}
                 </div>
               )}
 
@@ -208,13 +214,13 @@ const OrderInfo = ({ orderData }: { orderData: OrderWithItemsType }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-evoAdminPrimary font-semibold text-[11px]">{`Total Amount: `}</span>
                     <span className="text-stone-700 text-[11px] font-medium">{`BDT ${totalPayable.toFixed(
-                      2
+                      2,
                     )}`}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-green-700 font-semibold text-[11px]">{`Amount Paid: `}</span>
                     <span className="text-green-700 text-[11px] font-medium">{`BDT ${amountPaid.toFixed(
-                      2
+                      2,
                     )}`}</span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -255,7 +261,7 @@ const OrderInfo = ({ orderData }: { orderData: OrderWithItemsType }) => {
               )}
 
               <div>
-                <span className="text-evoAdminPrimary font-semibold">{`Terms: `}</span>
+                <span className="text-evoAdminPrimary font-semibold">{`Terms & All Condition: `}</span>
                 {`${orderData.terms}`}
               </div>
 
@@ -306,7 +312,7 @@ const OrderInfo = ({ orderData }: { orderData: OrderWithItemsType }) => {
                             </span>
                             <span className="font-medium text-stone-800">
                               {currencyFormatBDT(
-                                item.productPrice * item.quantity
+                                item.productPrice * item.quantity,
                               )}{" "}
                               BDT
                             </span>

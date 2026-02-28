@@ -8,6 +8,7 @@ import orderReducer from "@/store/slices/orderSlice";
 import heroSectionReducer from "@/store/slices/heroSectionSlice";
 import featuredSectionReducer from "@/store/slices/featuredSectionSlice";
 import ourClientsReducer from "@/store/slices/ourClientsSlice";
+import pickupPointReducer from "@/store/slices/pickupPointSlice";
 import taxonomyReducer from "@/store/slices/taxonomySlice";
 import categoryReducer from "@/store/slices/categorySlice";
 import subcategoryReducer from "@/store/slices/subcategorySlice";
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
   heroSections: heroSectionReducer,
   featuredSections: featuredSectionReducer,
   ourClients: ourClientsReducer,
+  pickupPoints: pickupPointReducer,
   taxonomy: taxonomyReducer,
   categories: categoryReducer,
   subcategories: subcategoryReducer,
