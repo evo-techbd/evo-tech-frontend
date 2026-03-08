@@ -20,6 +20,10 @@ const badgeVariants = cva(
         warning: "border border-orange-300 bg-orange-100/80 text-orange-500",
         failed: "border border-rose-300 bg-rose-100/80 text-rose-700",
         inprogress: "border border-sky-300 bg-sky-100 text-sky-700",
+        confirmed: "border border-blue-300 bg-blue-100 text-blue-700",
+        processing: "border border-violet-300 bg-violet-100 text-violet-700",
+        shipped: "border border-amber-300 bg-amber-100 text-amber-700",
+        delivered: "border border-emerald-400 bg-emerald-600 text-white",
       },
     },
     defaultVariants: {

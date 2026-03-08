@@ -101,15 +101,15 @@ const ProductCard2 = ({ eachItem }: { eachItem: any; }) => {
 
                 <div className="w-full h-full flex flex-col px-4 py-3 border-t border-stone-200">
                     <Link href={`/items/${eachItem.i_slug}`} className="w-full text-left line-clamp-2 font-[600] text-[14px] leading-5 text-stone-950 hover:text-[#0035FF] tracking-tight focus:outline-none transition duration-200">{eachItem.i_name}</Link>
-                    <p className="w-full text-left line-clamp-1 font-[500] text-[13px] leading-6 text-stone-700 tracking-tight">
+                    <div className="w-full text-left flex items-center gap-2 flex-wrap font-[500] text-[13px] leading-6 text-stone-700 tracking-tight">
                         {eachItem.i_instock ?
                             <>
-                                {`BDT ${currencyFormatBDT(eachItem.i_price)}`}{eachItem.i_prevprice !== 0 && <span className="text-[12px] text-stone-500 font-[400] line-through decoration-1 decoration-stone-600 ml-2">{currencyFormatBDT(eachItem.i_prevprice)}</span>}
+                                <span>{`BDT ${currencyFormatBDT(eachItem.i_price)}`}</span>{eachItem.i_prevprice !== 0 && <span className="text-[13px] text-stone-500 font-[500] line-through decoration-1 decoration-stone-600">{currencyFormatBDT(eachItem.i_prevprice)}</span>}
                             </>
                             :
                             <span className="text-red-600">Out of Stock</span>
                         }
-                    </p>
+                    </div>
                 </div>
             </div>
 

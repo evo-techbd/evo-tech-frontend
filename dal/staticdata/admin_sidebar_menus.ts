@@ -1,4 +1,4 @@
-import { BarChartIcon, UsersIcon, ChartArea, HelpCircleIcon, Settings2, Contact, ShieldCheck, Compass } from "lucide-react";
+import { BarChartIcon, UsersIcon, ChartArea, HelpCircleIcon, Settings2, Contact, ShieldCheck, Compass, Trash2 } from "lucide-react";
 import { RiBox1Line, RiDashboardHorizontalLine, RiMoneyDollarCircleLine } from "react-icons/ri";
 
 
@@ -97,6 +97,13 @@ const adminSidebarMenus = [
             },
         ],
         permissions: ["VIEW_STAFF", "MANAGE_STAFF"],
+    },
+    {
+        title: "Trash",
+        url: "/control/trash",
+        icon: Trash2,
+        collapsibleItems: [],
+        permissions: ["VIEW_PRODUCTS", "MANAGE_CATEGORIES", "MANAGE_BRANDS"], // Admins who manage content
     },
 ]
 

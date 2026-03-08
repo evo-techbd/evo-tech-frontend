@@ -52,6 +52,15 @@ interface OrderItem {
   };
 }
 
+interface PickupPoint {
+  _id: string;
+  name: string;
+  address: string;
+  city: string;
+  phone?: string;
+  hours?: string;
+}
+
 interface TrackingData {
   order: {
     orderNumber: string;
@@ -61,6 +70,10 @@ interface TrackingData {
     paymentMethod: string;
     shippingType: string;
     city: string;
+    houseStreet?: string;
+    subdistrict?: string;
+    country?: string;
+    pickupPoint?: PickupPoint | null;
     subtotal: number;
     discount: number;
     deliveryCharge: number;
@@ -97,6 +110,8 @@ const getPaymentStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
     case "paid":
       return "bg-green-100 text-green-800 border-green-300";
+    case "partial":
+      return "bg-blue-100 text-blue-800 border-blue-300";
     case "pending":
       return "bg-yellow-100 text-yellow-800 border-yellow-300";
     case "failed":
@@ -136,7 +151,7 @@ const OrderTimeline = ({ status }: { status: string }) => {
   ];
 
   const currentIndex = statuses.findIndex(
-    (s) => s.key === status.toLowerCase()
+    (s) => s.key === status.toLowerCase(),
   );
   const progressPercentage = (currentIndex / (statuses.length - 1)) * 100;
 
@@ -176,12 +191,12 @@ const OrderTimeline = ({ status }: { status: string }) => {
             currentIndex === 0
               ? "w-0"
               : currentIndex === 1
-              ? "w-1/4"
-              : currentIndex === 2
-              ? "w-2/4"
-              : currentIndex === 3
-              ? "w-3/4"
-              : "w-full"
+                ? "w-1/4"
+                : currentIndex === 2
+                  ? "w-2/4"
+                  : currentIndex === 3
+                    ? "w-3/4"
+                    : "w-full"
           }`}
         />
       </div>
@@ -228,9 +243,9 @@ export default function TrackOrderClient() {
 
   // Auto-fetch order if tracking code is in URL
   useEffect(() => {
-    const trackingCode = searchParams.get('code');
+    const trackingCode = searchParams.get("code");
     if (trackingCode) {
-      setValue('trackingCode', trackingCode);
+      setValue("trackingCode", trackingCode);
       fetchOrderByTrackingCode(trackingCode);
     }
   }, [searchParams, setValue]);
@@ -243,7 +258,7 @@ export default function TrackOrderClient() {
     <div className="min-h-screen bg-stone-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Success Banner (shown when redirected from checkout) */}
-        {searchParams.get('code') && !isLoading && trackingData && (
+        {searchParams.get("code") && !isLoading && trackingData && (
           <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg shadow-sm animate-in fade-in duration-500">
             <div className="flex items-start">
               <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -252,8 +267,9 @@ export default function TrackOrderClient() {
                   Order Placed Successfully! 🎉
                 </h3>
                 <p className="text-sm text-green-700 mt-1">
-                  Your order has been confirmed. A confirmation email has been sent to your email address.
-                  You can track your order status below.
+                  Your order has been confirmed. A confirmation email has been
+                  sent to your email address. You can track your order status
+                  below.
                 </p>
               </div>
             </div>
@@ -337,7 +353,7 @@ export default function TrackOrderClient() {
                   </div>
                   <Badge
                     className={`${getStatusColor(
-                      trackingData.order.orderStatus
+                      trackingData.order.orderStatus,
                     )} border font-semibold`}
                   >
                     {trackingData.order.orderStatus.toUpperCase()}
@@ -372,7 +388,7 @@ export default function TrackOrderClient() {
                       <p className="text-xs text-stone-500">Payment Status</p>
                       <Badge
                         className={`${getPaymentStatusColor(
-                          trackingData.order.paymentStatus
+                          trackingData.order.paymentStatus,
                         )} border text-xs mt-1`}
                       >
                         {trackingData.order.paymentStatus.toUpperCase()}
@@ -400,7 +416,7 @@ export default function TrackOrderClient() {
                       <p className="text-xs text-stone-500">Order Date</p>
                       <p className="text-sm font-semibold text-stone-900">
                         {new Date(
-                          trackingData.order.createdAt
+                          trackingData.order.createdAt,
                         ).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
@@ -411,9 +427,79 @@ export default function TrackOrderClient() {
                   </div>
                 </div>
 
+                {/* Shipping Information */}
+                <div className="bg-stone-50 p-4 rounded-lg">
+                  <p className="text-xs text-stone-500 mb-3 font-semibold">
+                    Shipping Information
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-stone-500">Shipping Type</p>
+                      <p className="text-sm font-medium mt-0.5">
+                        {trackingData.order.shippingType === "pickup_point"
+                          ? "Pickup Point"
+                          : "Express Delivery"}
+                      </p>
+                    </div>
+
+                    {trackingData.order.shippingType === "pickup_point" &&
+                    trackingData.order.pickupPoint ? (
+                      <div>
+                        <p className="text-xs text-stone-500">
+                          Pickup Location
+                        </p>
+                        <div className="mt-1 text-sm space-y-0.5">
+                          <p className="font-semibold text-stone-900">
+                            {trackingData.order.pickupPoint.name}
+                          </p>
+                          <p className="text-stone-700">
+                            {trackingData.order.pickupPoint.address}
+                          </p>
+                          {trackingData.order.pickupPoint.phone && (
+                            <p className="text-stone-600">
+                              Phone: {trackingData.order.pickupPoint.phone}
+                            </p>
+                          )}
+                          {trackingData.order.pickupPoint.hours && (
+                            <p className="text-stone-600">
+                              Hours: {trackingData.order.pickupPoint.hours}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : trackingData.order.shippingType !== "pickup_point" ? (
+                      <div>
+                        <p className="text-xs text-stone-500">
+                          Delivery Address
+                        </p>
+                        <div className="mt-1 text-sm space-y-0.5">
+                          {trackingData.order.houseStreet && (
+                            <p className="text-stone-700">
+                              {trackingData.order.houseStreet}
+                            </p>
+                          )}
+                          <p className="text-stone-700">
+                            {[
+                              trackingData.order.subdistrict,
+                              trackingData.order.city,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </p>
+                          {trackingData.order.country && (
+                            <p className="text-stone-700">
+                              {trackingData.order.country}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
                 {/* Customer Info */}
                 <div className="bg-stone-50 p-4 rounded-lg">
-                  <p className="text-xs text-stone-500 mb-2">
+                  <p className="text-xs text-stone-500 mb-2 font-semibold">
                     Customer Information
                   </p>
                   <div className="space-y-1">

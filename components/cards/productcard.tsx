@@ -31,15 +31,15 @@ const ProductCard = ({ imgsrc = "", prodname = "unknown product", prodslug = ``,
             </div>
             <div className="w-full h-full flex flex-col px-4 py-3 border-t-2 border-stone-200">
                 <Link href={`/items/${prodslug}`} className="w-full text-left line-clamp-2 font-[600] text-[14px] leading-5 text-stone-950 hover:text-[#0035FF] tracking-tight focus:outline-none transition duration-200">{prodname}</Link>
-                <p className="w-full text-left line-clamp-1 font-[500] text-[13px] leading-6 text-stone-700 tracking-tight">
+                <div className="w-full text-left flex items-center gap-2 flex-wrap font-[500] text-[13px] leading-6 text-stone-700 tracking-tight">
                     {instock ?
                         <>
-                            {`BDT ${currencyFormatBDT(prodprice)}`}{prodprevprice !== 0 && <span className="text-[12px] text-stone-500 font-[400] line-through decoration-1 decoration-stone-600 ml-2">{currencyFormatBDT(prodprevprice)}</span>}
+                            <span>{`BDT ${currencyFormatBDT(prodprice)}`}</span>{prodprevprice !== 0 && <span className="text-[13px] text-stone-500 font-[500] line-through decoration-1 decoration-stone-600">{currencyFormatBDT(prodprevprice)}</span>}
                         </>
                         :
                         <span className="text-red-600">Out of Stock</span>
                     }
-                </p>
+                </div>
             </div>
         </div>
     );

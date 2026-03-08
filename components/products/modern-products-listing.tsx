@@ -238,6 +238,10 @@ const ProductGridCard = ({ product }: { product: any }) => {
       (item: any) => item.item_id === product.itemid && item.item_color === ""
     );
 
+    // Determine if item is pre-order and get appropriate price (full price, not 50%)
+    const isPreOrder = product.i_ispreorder && product.i_preorderprice && product.i_preorderprice < product.i_price;
+    const itemPrice = isPreOrder ? product.i_preorderprice : product.i_price;
+
     let updatedCart;
     if (existingItemIndex >= 0) {
       // Item exists, increase quantity
@@ -253,15 +257,22 @@ const ProductGridCard = ({ product }: { product: any }) => {
         item_id: product.itemid,
         item_name: product.i_name,
         item_slug: product.i_slug,
-        item_price: product.i_price,
+        item_mainimg: product.i_mainimg,
+        item_category: product.i_category || "",
+        item_subcategory: product.i_subcategory || "",
+        item_brand: product.i_brand || "",
+        item_price: itemPrice,
         item_quantity: 1,
         item_color: "",
-        item_mainimg: product.i_mainimg,
         item_weight: product.i_weight || 0,
         item_instock: product.i_instock,
+        item_stock: product.i_stock || null,
+        item_lowstockthreshold: product.i_lowstockthreshold || null,
+        item_isPreOrder: isPreOrder,
+        item_preorderPrice: product.i_preorderprice || null,
       };
       updatedCart = [...parsedCart.items, newItem];
-      toast.success("Item added to cart");
+      toast.success(isPreOrder ? "Pre-order item added to cart" : "Item added to cart");
     }
 
     // Update localStorage
@@ -362,15 +373,25 @@ const ProductGridCard = ({ product }: { product: any }) => {
         <div className="flex flex-col gap-0.5 mt-auto mb-1">
           {product.i_preorderprice && product.i_ispreorder && product.i_preorderprice < product.i_price ? (
             <>
-              <span className="text-sm sm:text-base font-bold text-cyan-600">
-                ৳{product.i_preorderprice.toLocaleString()}
-              </span>
-              <span className="text-xs font-bold text-red-500 line-through">
-                ৳{product.i_price.toLocaleString()}
-              </span>
+              <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
+                <span className="text-sm sm:text-base font-bold text-cyan-600">
+                  ৳{Math.round(product.i_preorderprice * 0.5).toLocaleString()}
+                </span>
+                <span className="text-[10px] sm:text-xs text-cyan-600 font-medium">
+                  (50% now)
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-[10px] sm:text-xs text-stone-500">
+                  Full: ৳{product.i_preorderprice.toLocaleString()}
+                </span>
+                <span className="text-[10px] sm:text-xs text-red-500 line-through">
+                  ৳{product.i_price.toLocaleString()}
+                </span>
+              </div>
             </>
           ) : (
-            <>
+            <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
               <span className="text-sm sm:text-base font-bold text-stone-900">
                 ৳{product.i_price.toLocaleString()}
               </span>
@@ -379,7 +400,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
                   ৳{product.i_prevprice.toLocaleString()}
                 </span>
               )}
-            </>
+            </div>
           )}
         </div>
 
@@ -429,6 +450,10 @@ const ProductListCard = ({ product }: { product: any }) => {
       (item: any) => item.item_id === product.itemid && item.item_color === ""
     );
 
+    // Determine if item is pre-order and get appropriate price (full price, not 50%)
+    const isPreOrder = product.i_ispreorder && product.i_preorderprice && product.i_preorderprice < product.i_price;
+    const itemPrice = isPreOrder ? product.i_preorderprice : product.i_price;
+
     let updatedCart;
     if (existingItemIndex >= 0) {
       // Item exists, increase quantity
@@ -444,15 +469,22 @@ const ProductListCard = ({ product }: { product: any }) => {
         item_id: product.itemid,
         item_name: product.i_name,
         item_slug: product.i_slug,
-        item_price: product.i_price,
+        item_mainimg: product.i_mainimg,
+        item_category: product.i_category || "",
+        item_subcategory: product.i_subcategory || "",
+        item_brand: product.i_brand || "",
+        item_price: itemPrice,
         item_quantity: 1,
         item_color: "",
-        item_mainimg: product.i_mainimg,
         item_weight: product.i_weight || 0,
         item_instock: product.i_instock,
+        item_stock: product.i_stock || null,
+        item_lowstockthreshold: product.i_lowstockthreshold || null,
+        item_isPreOrder: isPreOrder,
+        item_preorderPrice: product.i_preorderprice || null,
       };
       updatedCart = [...parsedCart.items, newItem];
-      toast.success("Item added to cart");
+      toast.success(isPreOrder ? "Pre-order item added to cart" : "Item added to cart");
     }
 
     // Update localStorage
@@ -519,26 +551,6 @@ const ProductListCard = ({ product }: { product: any }) => {
           {product.i_name}
         </h3>
 
-        {/* Rating */}
-        {product.i_rating > 0 && (
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <FiStar
-                  key={i}
-                  className={`w-4 h-4 ${i < Math.floor(product.i_rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-stone-300"
-                    }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-stone-500">
-              {product.i_rating.toFixed(1)} ({product.i_reviewCount} reviews)
-            </span>
-          </div>
-        )}
-
         {/* Description */}
         {product.i_description && (
           <p className="text-sm text-stone-600 mb-4 line-clamp-2">
@@ -568,24 +580,37 @@ const ProductListCard = ({ product }: { product: any }) => {
           <div className="flex flex-col gap-1">
             {product.i_preorderprice && product.i_ispreorder && product.i_preorderprice < product.i_price ? (
               <>
-                <span className="text-2xl font-bold text-cyan-600">
-                  BDT {product.i_preorderprice.toLocaleString()}
-                </span>
-                <span className="text-base text-red-500 line-through">
-                  BDT {product.i_price.toLocaleString()}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-cyan-600">
+                    ৳{Math.round(product.i_preorderprice * 0.5).toLocaleString()}
+                  </span>
+                  <span className="text-sm text-cyan-600 font-medium">
+                    (50% now)
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm text-stone-500">
+                    Full Price: ৳{product.i_preorderprice.toLocaleString()}
+                  </span>
+                  <span className="text-sm text-red-500 line-through">
+                    ৳{product.i_price.toLocaleString()}
+                  </span>
+                </div>
+                <span className="text-xs text-stone-500">
+                  Pay remaining 50% later
                 </span>
               </>
             ) : (
-              <>
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-2xl font-bold text-stone-900">
-                  BDT {product.i_price.toLocaleString()}
+                  ৳{product.i_price.toLocaleString()}
                 </span>
                 {product.i_prevprice > product.i_price && (
-                  <span className="text-base text-stone-400 line-through">
-                    BDT {product.i_prevprice.toLocaleString()}
+                  <span className="text-2xl font-bold text-stone-400 line-through">
+                    ৳{product.i_prevprice.toLocaleString()}
                   </span>
                 )}
-              </>
+              </div>
             )}
           </div>
 

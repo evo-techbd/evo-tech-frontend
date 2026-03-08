@@ -41,8 +41,9 @@ const ServicesPage = () => {
         "Custom designs welcome",
         "Perfect for gifts and branding",
       ],
-      link: "/products-and-accessories",
+      link: "https://www.facebook.com/mergein.bd25",
       color: "from-purple-500 to-purple-600",
+      isExternal: true,
     },
     {
       icon: FaLaptopCode,
@@ -69,7 +70,7 @@ const ServicesPage = () => {
         "Automation projects",
         "Hardware & software integration",
       ],
-      link: "/services",
+      link: "/contact-us",
       color: "from-orange-500 to-orange-600",
     },
     {
@@ -166,25 +167,49 @@ const ServicesPage = () => {
                       </ul>
                     </div>
 
-                    <Link
-                      href={service.link}
-                      className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 transition-all duration-300 hover:gap-3 shadow-md hover:shadow-xl"
-                    >
-                      Learn More
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {service.isExternal ? (
+                      <a
+                        href={service.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 transition-all duration-300 hover:gap-3 shadow-md hover:shadow-xl"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                    </Link>
+                        Learn More
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                      </a>
+                    ) : (
+                      <Link
+                        href={service.link}
+                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 transition-all duration-300 hover:gap-3 shadow-md hover:shadow-xl"
+                      >
+                        Learn More
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
