@@ -48,6 +48,11 @@ const adminSidebarMenus = [
                 permissions: ["VIEW_ORDERS"],
             },
             {
+                title: "3D Printing Sales",
+                url: "/control/printing-sales",
+                permissions: ["VIEW_ORDERS"],
+            },
+            {
                 title: "Coupons",
                 url: "/control/coupons",
                 permissions: ["MANAGE_SITE_SETTINGS"],
