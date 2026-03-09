@@ -88,13 +88,13 @@ export const ordersColumns: ColumnDef<OrderWithItemsType>[] = [
           case "pending":
             return "customdefault";
           case "confirmed":
-            return "inprogress";
+            return "confirmed";
           case "processing":
-            return "inprogress";
+            return "processing";
           case "shipped":
-            return "warning";
+            return "shipped";
           case "delivered":
-            return "success";
+            return "delivered";
           case "cancelled":
             return "failed";
           default:

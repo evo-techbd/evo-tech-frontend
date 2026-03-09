@@ -54,10 +54,10 @@ const getPaymentStatusBadge = (status: string) => {
 const getOrderStatusBadge = (status: string) => {
   const statusConfig = {
     pending: { variant: "customdefault" as const, text: "Pending" },
-    confirmed: { variant: "inprogress" as const, text: "Confirmed" },
-    processing: { variant: "inprogress" as const, text: "Processing" },
-    shipped: { variant: "warning" as const, text: "Shipped" },
-    delivered: { variant: "success" as const, text: "Delivered" },
+    confirmed: { variant: "confirmed" as const, text: "Confirmed" },
+    processing: { variant: "processing" as const, text: "Processing" },
+    shipped: { variant: "shipped" as const, text: "Shipped" },
+    delivered: { variant: "delivered" as const, text: "Delivered" },
     cancelled: { variant: "failed" as const, text: "Cancelled" },
   };
 

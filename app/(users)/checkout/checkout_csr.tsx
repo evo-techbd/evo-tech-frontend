@@ -1082,7 +1082,7 @@ const CheckoutParts = () => {
                           <li>
                             {`Payable amount: `}
                             <span className="text-[#E2136E] font-semibold">{`${currencyFormatBDT(
-                              totalPayableAmount,
+                              dueNowTotal,
                             )} BDT`}</span>
                           </li>
                           <li>
@@ -1150,7 +1150,7 @@ const CheckoutParts = () => {
                           <li>
                             {`Payable amount: `}
                             <span className="text-[#1e40af] font-semibold">{`${currencyFormatBDT(
-                              totalPayableAmount,
+                              dueNowTotal,
                             )} BDT`}</span>
                           </li>
                           <li>

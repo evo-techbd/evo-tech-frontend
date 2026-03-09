@@ -78,7 +78,7 @@ export function DeleteDialog<T>({
                             <DialogTitle className="mr-7 py-2">{warningTitle || `Are you sure?`}</DialogTitle>
                             <DialogDescription>
                                 {warningDescription ||
-                                    `This action cannot be undone. This will permanently delete the selected item from records.`
+                                    `This will move the selected item to trash. You can restore it from the Trash page within 30 days.`
                                 }
                             </DialogDescription>
                         </DialogHeader>
@@ -128,7 +128,7 @@ export function DeleteDialog<T>({
                         <DrawerTitle>{warningTitle || `Are you sure?`}</DrawerTitle>
                         <DrawerDescription>
                             {warningDescription ||
-                                `This action cannot be undone. This will permanently delete the selected item from records.`
+                                `This will move the selected item to trash. You can restore it from the Trash page within 30 days.`
                             }
                         </DrawerDescription>
                     </DrawerHeader>
