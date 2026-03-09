@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/utils/cookies";
 import axios from "@/utils/axios/axios";
+import { DateRangeSelector, DateRangeType } from "./date-range-selector";
 
 interface DashboardStats {
   totalRevenue: number;
@@ -42,6 +43,7 @@ interface DashboardStats {
 
 export function AdminDashboardStats() {
   const currentUser = getCurrentUser();
+  const [dateRange, setDateRange] = useState<DateRangeType>("all-time");
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalProfit: 0,
@@ -68,7 +70,8 @@ export function AdminDashboardStats() {
     if (!currentUser) return;
 
     try {
-      const response = await axios.get("/dashboard/stats");
+      setLoading(true);
+      const response = await axios.get(`/dashboard/stats?range=${dateRange}`);
 
       if (response.data.success) {
         setStats(response.data.data);
@@ -80,7 +83,7 @@ export function AdminDashboardStats() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, dateRange]);
 
   useEffect(() => {
     fetchStats();
@@ -96,6 +99,21 @@ export function AdminDashboardStats() {
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat("en-US").format(num);
+  };
+
+  const getComparisonText = () => {
+    switch (dateRange) {
+      case "today":
+        return "from yesterday";
+      case "this-week":
+        return "from last week";
+      case "this-month":
+        return "from last month";
+      case "all-time":
+        return "from last year";
+      default:
+        return "from last period";
+    }
   };
 
   const StatCard = ({
@@ -136,7 +154,7 @@ export function AdminDashboardStats() {
             <span className={isPositive ? "text-green-600" : "text-red-600"}>
               {Math.abs(growth)}%
             </span>
-            <span>from last month</span>
+            <span>{getComparisonText()}</span>
           </div>
         </CardContent>
       </Card>
@@ -144,89 +162,103 @@ export function AdminDashboardStats() {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <StatCard
-        title="Total Revenue"
-        value={stats.totalRevenue}
-        icon={DollarSign}
-        growth={stats.revenueGrowth}
-        format="currency"
-      />
-      <StatCard
-        title="Total Profit"
-        value={stats.totalProfit}
-        icon={TrendingUp}
-        growth={stats.profitGrowth}
-        format="currency"
-      />
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div>
-              <StatCard
-                title="Total Orders"
-                value={stats.totalOrders}
-                icon={ShoppingCart}
-                growth={stats.ordersGrowth}
-              />
-            </div>
-          </TooltipTrigger>
-          {stats.orderBreakdown && (
-            <TooltipContent
-              side="bottom"
-              className="bg-white border border-stone-200 shadow-lg p-3 text-stone-900"
-            >
-              <div className="space-y-1.5 text-xs min-w-[200px]">
-                <div className="font-semibold mb-2 text-sm">Order Status Breakdown</div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600">Confirmed:</span>
-                  <span className="font-semibold text-green-600">{stats.orderBreakdown.confirmed}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600">Processing:</span>
-                  <span className="font-semibold text-blue-600">{stats.orderBreakdown.processing}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600">Shipped:</span>
-                  <span className="font-semibold text-purple-600">{stats.orderBreakdown.shipped}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600">Delivered:</span>
-                  <span className="font-semibold text-emerald-600">{stats.orderBreakdown.delivered}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600">Pending:</span>
-                  <span className="font-semibold text-yellow-600">{stats.orderBreakdown.pending}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-600">Cancelled:</span>
-                  <span className="font-semibold text-red-600">{stats.orderBreakdown.cancelled}</span>
-                </div>
+    <div className="space-y-4">
+      {/* Date Range Selector */}
+      <div className="flex justify-end">
+        <DateRangeSelector value={dateRange} onChange={setDateRange} />
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Revenue"
+          value={stats.totalRevenue}
+          icon={DollarSign}
+          growth={stats.revenueGrowth}
+          format="currency"
+        />
+        <StatCard
+          title="Total Profit"
+          value={stats.totalProfit}
+          icon={TrendingUp}
+          growth={stats.profitGrowth}
+          format="currency"
+        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <StatCard
+                  title="Total Orders"
+                  value={stats.totalOrders}
+                  icon={ShoppingCart}
+                  growth={stats.ordersGrowth}
+                />
               </div>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
-      <StatCard
-        title="Total Customers"
-        value={stats.totalCustomers}
-        icon={Users}
-        growth={stats.customersGrowth}
-      />
-      {/* Added a 5th card row or adjust grid if needed, currently 4 cols. User likely wants it visible. 
-                Original had 4 cards. Now 5. Adjust grid to fit or just appending.
-                Actually grid-cols-4 might break layout. Let's keep 4 cols but maybe 5 items wrap?
-                Or maybe remove Products to make room?
-                User asked "show some more details of profit/total profit". 
-                I'll add it as the 2nd item. 
-                Total Products will wrap or I can remove it if space is issue, but better to keep. 
-            */}
-      <StatCard
-        title="Total Products"
-        value={stats.totalProducts}
-        icon={Package}
-        growth={stats.productsGrowth}
-      />
+            </TooltipTrigger>
+            {stats.orderBreakdown && (
+              <TooltipContent
+                side="bottom"
+                className="bg-white border border-stone-200 shadow-lg p-3 text-stone-900"
+              >
+                <div className="space-y-1.5 text-xs min-w-[200px]">
+                  <div className="font-semibold mb-2 text-sm">
+                    Order Status Breakdown
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-600">Confirmed:</span>
+                    <span className="font-semibold text-green-600">
+                      {stats.orderBreakdown.confirmed}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-600">Processing:</span>
+                    <span className="font-semibold text-blue-600">
+                      {stats.orderBreakdown.processing}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-600">Shipped:</span>
+                    <span className="font-semibold text-purple-600">
+                      {stats.orderBreakdown.shipped}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-600">Delivered:</span>
+                    <span className="font-semibold text-emerald-600">
+                      {stats.orderBreakdown.delivered}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-600">Pending:</span>
+                    <span className="font-semibold text-yellow-600">
+                      {stats.orderBreakdown.pending}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-600">Cancelled:</span>
+                    <span className="font-semibold text-red-600">
+                      {stats.orderBreakdown.cancelled}
+                    </span>
+                  </div>
+                </div>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        <StatCard
+          title="Total Customers"
+          value={stats.totalCustomers}
+          icon={Users}
+          growth={stats.customersGrowth}
+        />
+        <StatCard
+          title="Total Products"
+          value={stats.totalProducts}
+          icon={Package}
+          growth={stats.productsGrowth}
+        />
+      </div>
     </div>
   );
 }
