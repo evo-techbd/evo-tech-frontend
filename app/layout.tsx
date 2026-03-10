@@ -9,6 +9,8 @@ import { TaxonomyProvider } from "@/components/providers/taxonomy-provider";
 import type { TaxonomyCategory } from "@/store/slices/taxonomySlice";
 import { ConditionalLayout } from "@/components/layout/conditional-layout";
 import { PreventNumberScroll } from "@/components/prevent-number-scroll";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com'),
@@ -195,6 +197,8 @@ const RootLayout = async ({ children }: { children: React.ReactNode; }) => {
             <div id="modal-root"></div>
           </TaxonomyProvider>
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
