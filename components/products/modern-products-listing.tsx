@@ -32,23 +32,23 @@ const ModernProductsListing = ({
   const createQueryString = useCallback(
     (name: string, value: string, prevQueryString?: string) => {
       const params = new URLSearchParams(
-        prevQueryString ? prevQueryString : searchParams.toString()
+        prevQueryString ? prevQueryString : searchParams.toString(),
       );
       params.set(name, value);
       return params.toString();
     },
-    [searchParams]
+    [searchParams],
   );
 
   const removeQueryParam = useCallback(
     (name: string, prevQueryString?: string) => {
       const params = new URLSearchParams(
-        prevQueryString ? prevQueryString : searchParams.toString()
+        prevQueryString ? prevQueryString : searchParams.toString(),
       );
       params.delete(name);
       return params.toString();
     },
-    [searchParams]
+    [searchParams],
   );
 
   if (fetchedProdData.length === 0) {
@@ -91,7 +91,7 @@ const ModernProductsListing = ({
       } else {
         router.push(
           `${pathname}?${createQueryString("page", page.toString())}`,
-          { scroll: true }
+          { scroll: true },
         );
       }
     }
@@ -218,28 +218,35 @@ const ModernProductsListing = ({
 const ProductGridCard = ({ product }: { product: any }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const cartdata = useSelector((state: RootState) => state.shoppingcart.cartdata);
+  const cartdata = useSelector(
+    (state: RootState) => state.shoppingcart.cartdata,
+  );
 
   const discount =
     product.i_prevprice > product.i_price
       ? Math.round(
-        ((product.i_prevprice - product.i_price) / product.i_prevprice) * 100
-      )
+          ((product.i_prevprice - product.i_price) / product.i_prevprice) * 100,
+        )
       : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const localevoFrontCart = localStorage.getItem('evoFrontCart');
-    const parsedCart = localevoFrontCart ? JSON.parse(localevoFrontCart) : { items: [], ctoken: '' };
+    const localevoFrontCart = localStorage.getItem("evoFrontCart");
+    const parsedCart = localevoFrontCart
+      ? JSON.parse(localevoFrontCart)
+      : { items: [], ctoken: "" };
 
     const existingItemIndex = parsedCart.items.findIndex(
-      (item: any) => item.item_id === product.itemid && item.item_color === ""
+      (item: any) => item.item_id === product.itemid && item.item_color === "",
     );
 
     // Determine if item is pre-order and get appropriate price (full price, not 50%)
-    const isPreOrder = product.i_ispreorder && product.i_preorderprice && product.i_preorderprice < product.i_price;
+    const isPreOrder =
+      product.i_ispreorder &&
+      product.i_preorderprice &&
+      product.i_preorderprice < product.i_price;
     const itemPrice = isPreOrder ? product.i_preorderprice : product.i_price;
 
     let updatedCart;
@@ -248,7 +255,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
       updatedCart = parsedCart.items.map((item: any, index: number) =>
         index === existingItemIndex
           ? { ...item, item_quantity: item.item_quantity + 1 }
-          : item
+          : item,
       );
       toast.success("Item quantity increased");
     } else {
@@ -272,11 +279,16 @@ const ProductGridCard = ({ product }: { product: any }) => {
         item_preorderPrice: product.i_preorderprice || null,
       };
       updatedCart = [...parsedCart.items, newItem];
-      toast.success(isPreOrder ? "Pre-order item added to cart" : "Item added to cart");
+      toast.success(
+        isPreOrder ? "Pre-order item added to cart" : "Item added to cart",
+      );
     }
 
     // Update localStorage
-    localStorage.setItem('evoFrontCart', JSON.stringify({ ...parsedCart, items: updatedCart }));
+    localStorage.setItem(
+      "evoFrontCart",
+      JSON.stringify({ ...parsedCart, items: updatedCart }),
+    );
 
     // Update Redux
     dispatch(setCartData(updatedCart));
@@ -291,7 +303,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
 
     // Navigate to cart page
     setTimeout(() => {
-      router.push('/cart');
+      router.push("/cart");
     }, 500);
   };
 
@@ -312,6 +324,13 @@ const ProductGridCard = ({ product }: { product: any }) => {
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {product.i_ispreorder &&
+            product.i_preorderprice &&
+            product.i_preorderprice < product.i_price && (
+              <span className="px-1.5 py-0.5 bg-cyan-600 text-white text-[10px] font-bold rounded">
+                Pre-Order
+              </span>
+            )}
           {discount > 0 && (
             <span className="px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">
               -{discount}%
@@ -356,10 +375,11 @@ const ProductGridCard = ({ product }: { product: any }) => {
               {[...Array(5)].map((_, i) => (
                 <FiStar
                   key={i}
-                  className={`w-2.5 h-2.5 ${i < Math.floor(product.i_rating)
+                  className={`w-2.5 h-2.5 ${
+                    i < Math.floor(product.i_rating)
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-stone-300"
-                    }`}
+                  }`}
                 />
               ))}
             </div>
@@ -371,37 +391,28 @@ const ProductGridCard = ({ product }: { product: any }) => {
 
         {/* Price */}
         <div className="flex flex-col gap-0.5 mt-auto mb-1">
-          {product.i_preorderprice && product.i_ispreorder && product.i_preorderprice < product.i_price ? (
-            <>
-              <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
-                <span className="text-sm sm:text-base font-bold text-cyan-600">
-                  ৳{Math.round(product.i_preorderprice * 0.5).toLocaleString()}
-                </span>
-                <span className="text-[10px] sm:text-xs text-cyan-600 font-medium">
-                  (50% now)
-                </span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-[10px] sm:text-xs text-stone-500">
-                  Full: ৳{product.i_preorderprice.toLocaleString()}
-                </span>
-                <span className="text-[10px] sm:text-xs text-red-500 line-through">
-                  ৳{product.i_price.toLocaleString()}
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
-              <span className="text-sm sm:text-base font-bold text-stone-900">
-                ৳{product.i_price.toLocaleString()}
-              </span>
-              {product.i_prevprice > product.i_price && (
-                <span className="text-xs font-bold text-stone-400 line-through">
-                  ৳{product.i_prevprice.toLocaleString()}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
+            <span className="text-sm sm:text-base font-bold text-stone-900">
+              {product.i_preorderprice &&
+              product.i_ispreorder &&
+              product.i_preorderprice < product.i_price
+                ? `৳${product.i_preorderprice.toLocaleString()}`
+                : `৳${product.i_price.toLocaleString()}`}
+            </span>
+            {product.i_preorderprice &&
+            product.i_ispreorder &&
+            product.i_preorderprice < product.i_price
+              ? product.i_prevprice > product.i_preorderprice && (
+                  <span className="text-xs font-bold text-red-500 line-through">
+                    ৳{product.i_prevprice.toLocaleString()}
+                  </span>
+                )
+              : product.i_prevprice > product.i_price && (
+                  <span className="text-xs font-bold text-red-500 line-through">
+                    ৳{product.i_prevprice.toLocaleString()}
+                  </span>
+                )}
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -411,14 +422,18 @@ const ProductGridCard = ({ product }: { product: any }) => {
             className="w-full py-1.5 sm:py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors flex items-center justify-center gap-1.5"
           >
             <FiShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Add to Cart</span>
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+              Add to Cart
+            </span>
           </button>
           <button
             onClick={handleBuyNow}
             className="w-full py-1.5 sm:py-2 bg-stone-800 text-white rounded-md hover:bg-stone-900 transition-colors flex items-center justify-center gap-1.5"
           >
             <BsLightning className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Buy Now</span>
+            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+              Buy Now
+            </span>
           </button>
         </div>
       </div>
@@ -430,28 +445,35 @@ const ProductGridCard = ({ product }: { product: any }) => {
 const ProductListCard = ({ product }: { product: any }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const cartdata = useSelector((state: RootState) => state.shoppingcart.cartdata);
+  const cartdata = useSelector(
+    (state: RootState) => state.shoppingcart.cartdata,
+  );
 
   const discount =
     product.i_prevprice > product.i_price
       ? Math.round(
-        ((product.i_prevprice - product.i_price) / product.i_prevprice) * 100
-      )
+          ((product.i_prevprice - product.i_price) / product.i_prevprice) * 100,
+        )
       : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const localevoFrontCart = localStorage.getItem('evoFrontCart');
-    const parsedCart = localevoFrontCart ? JSON.parse(localevoFrontCart) : { items: [], ctoken: '' };
+    const localevoFrontCart = localStorage.getItem("evoFrontCart");
+    const parsedCart = localevoFrontCart
+      ? JSON.parse(localevoFrontCart)
+      : { items: [], ctoken: "" };
 
     const existingItemIndex = parsedCart.items.findIndex(
-      (item: any) => item.item_id === product.itemid && item.item_color === ""
+      (item: any) => item.item_id === product.itemid && item.item_color === "",
     );
 
     // Determine if item is pre-order and get appropriate price (full price, not 50%)
-    const isPreOrder = product.i_ispreorder && product.i_preorderprice && product.i_preorderprice < product.i_price;
+    const isPreOrder =
+      product.i_ispreorder &&
+      product.i_preorderprice &&
+      product.i_preorderprice < product.i_price;
     const itemPrice = isPreOrder ? product.i_preorderprice : product.i_price;
 
     let updatedCart;
@@ -460,7 +482,7 @@ const ProductListCard = ({ product }: { product: any }) => {
       updatedCart = parsedCart.items.map((item: any, index: number) =>
         index === existingItemIndex
           ? { ...item, item_quantity: item.item_quantity + 1 }
-          : item
+          : item,
       );
       toast.success("Item quantity increased");
     } else {
@@ -484,11 +506,16 @@ const ProductListCard = ({ product }: { product: any }) => {
         item_preorderPrice: product.i_preorderprice || null,
       };
       updatedCart = [...parsedCart.items, newItem];
-      toast.success(isPreOrder ? "Pre-order item added to cart" : "Item added to cart");
+      toast.success(
+        isPreOrder ? "Pre-order item added to cart" : "Item added to cart",
+      );
     }
 
     // Update localStorage
-    localStorage.setItem('evoFrontCart', JSON.stringify({ ...parsedCart, items: updatedCart }));
+    localStorage.setItem(
+      "evoFrontCart",
+      JSON.stringify({ ...parsedCart, items: updatedCart }),
+    );
 
     // Update Redux
     dispatch(setCartData(updatedCart));
@@ -503,7 +530,7 @@ const ProductListCard = ({ product }: { product: any }) => {
 
     // Navigate to cart page
     setTimeout(() => {
-      router.push('/cart');
+      router.push("/cart");
     }, 500);
   };
 
@@ -524,6 +551,13 @@ const ProductListCard = ({ product }: { product: any }) => {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.i_ispreorder &&
+            product.i_preorderprice &&
+            product.i_preorderprice < product.i_price && (
+              <span className="px-2 py-1 bg-cyan-600 text-white text-xs font-bold rounded-md">
+                Pre-Order
+              </span>
+            )}
           {discount > 0 && (
             <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-md">
               -{discount}%
@@ -578,40 +612,28 @@ const ProductListCard = ({ product }: { product: any }) => {
         {/* Price and Action */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-auto">
           <div className="flex flex-col gap-1">
-            {product.i_preorderprice && product.i_ispreorder && product.i_preorderprice < product.i_price ? (
-              <>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-cyan-600">
-                    ৳{Math.round(product.i_preorderprice * 0.5).toLocaleString()}
-                  </span>
-                  <span className="text-sm text-cyan-600 font-medium">
-                    (50% now)
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-stone-500">
-                    Full Price: ৳{product.i_preorderprice.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-red-500 line-through">
-                    ৳{product.i_price.toLocaleString()}
-                  </span>
-                </div>
-                <span className="text-xs text-stone-500">
-                  Pay remaining 50% later
-                </span>
-              </>
-            ) : (
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-2xl font-bold text-stone-900">
-                  ৳{product.i_price.toLocaleString()}
-                </span>
-                {product.i_prevprice > product.i_price && (
-                  <span className="text-2xl font-bold text-stone-400 line-through">
-                    ৳{product.i_prevprice.toLocaleString()}
-                  </span>
-                )}
-              </div>
-            )}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-2xl font-bold text-stone-900">
+                {product.i_preorderprice &&
+                product.i_ispreorder &&
+                product.i_preorderprice < product.i_price
+                  ? `৳${product.i_preorderprice.toLocaleString()}`
+                  : `৳${product.i_price.toLocaleString()}`}
+              </span>
+              {product.i_preorderprice &&
+              product.i_ispreorder &&
+              product.i_preorderprice < product.i_price
+                ? product.i_prevprice > product.i_preorderprice && (
+                    <span className="text-2xl font-bold text-stone-400 line-through">
+                      ৳{product.i_prevprice.toLocaleString()}
+                    </span>
+                  )
+                : product.i_prevprice > product.i_price && (
+                    <span className="text-2xl font-bold text-stone-400 line-through">
+                      ৳{product.i_prevprice.toLocaleString()}
+                    </span>
+                  )}
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
