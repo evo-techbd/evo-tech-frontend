@@ -324,13 +324,13 @@ const ProductGridCard = ({ product }: { product: any }) => {
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {product.i_ispreorder &&
+          {/* {product.i_ispreorder &&
             product.i_preorderprice &&
             product.i_preorderprice < product.i_price && (
               <span className="px-1.5 py-0.5 bg-cyan-600 text-white text-[10px] font-bold rounded">
                 Pre-Order
               </span>
-            )}
+            )} */}
           {discount > 0 && (
             <span className="px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">
               -{discount}%
