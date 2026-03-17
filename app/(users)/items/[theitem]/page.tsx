@@ -23,63 +23,67 @@ export const generateMetadata = async (
   const itemslug = params.theitem;
   const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || "https://evo-techbd.com";
 
-  // Fetch product data for accurate metadata
+  // Fetch product data for accurate metadata using native fetch with ISR caching
   try {
-    const productResponse = await axios
-      .get(`/products/slug/${itemslug}`)
-      .then((res) => res.data)
-      .catch(() => null);
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.evo-techbd.com/api/v1";
+    const productResponse = await fetch(`${backendUrl}/products/slug/${itemslug}`, {
+      next: { revalidate: 3600 },
+      headers: { "Content-Type": "application/json" }
+    });
 
-    if (productResponse?.data) {
-      const product = productResponse.data;
-      const productUrl = `${baseUrl}/items/${itemslug}`;
-      const imageUrl =
-        product.mainImage || `${baseUrl}/assets/default-product.png`;
+    if (productResponse.ok) {
+      const productData = await productResponse.json();
+      const product = productData?.data;
+      
+      if (product) {
+        const productUrl = `${baseUrl}/items/${itemslug}`;
+        const imageUrl = product.mainImage || `${baseUrl}/assets/default-product.png`;
 
-      return {
-        title: `${product.name} | Buy Online in Bangladesh`,
-        description:
-          product.shortDescription ||
-          product.description ||
-          `Buy ${product.name} online in Bangladesh. ${product.inStock ? "In stock" : "Available"} at Evo-Tech Bangladesh with warranty and fast delivery.`,
-        keywords: [
-          product.name,
-          product.brand?.name || "tech product",
-          product.category?.name || "electronics",
-          "Bangladesh",
-          "online shopping",
-          "buy online",
-        ],
-        openGraph: {
-          title: product.name,
+        return {
+          title: `${product.name} | Buy Online in Bangladesh`,
           description:
             product.shortDescription ||
             product.description ||
-            `Buy ${product.name} at Evo-Tech Bangladesh`,
-          url: productUrl,
-          siteName: "Evo-Tech Bangladesh",
-          images: [
-            {
-              url: imageUrl,
-              width: 800,
-              height: 800,
-              alt: product.name,
-            },
+            `Buy ${product.name} online in Bangladesh. ${product.inStock ? "In stock" : "Available"} at Evo-Tech Bangladesh with warranty and fast delivery.`,
+          keywords: [
+            product.name,
+            product.brand?.name || "tech product",
+            product.category?.name || "electronics",
+            "Bangladesh",
+            "online shopping",
+            "buy online",
           ],
-          type: "website",
-        },
-        twitter: {
-          card: "summary_large_image",
-          title: product.name,
-          description:
-            product.shortDescription ||
-            `Buy ${product.name} at Evo-Tech Bangladesh`,
-          images: [imageUrl],
-        },
-        alternates: {
-          canonical: productUrl,
-        },
-      };
+          openGraph: {
+            title: product.name,
+            description:
+              product.shortDescription ||
+              product.description ||
+              `Buy ${product.name} at Evo-Tech Bangladesh`,
+            url: productUrl,
+            siteName: "Evo-Tech Bangladesh",
+            images: [
+              {
+                url: imageUrl,
+                width: 800,
+                height: 800,
+                alt: product.name,
+              },
+            ],
+            type: "website",
+          },
+          twitter: {
+            card: "summary_large_image",
+            title: product.name,
+            description:
+              product.shortDescription ||
+              `Buy ${product.name} at Evo-Tech Bangladesh`,
+            images: [imageUrl],
+          },
+          alternates: {
+            canonical: productUrl,
+          },
+        };
+      }
     }
   } catch (error) {
     console.error("Error fetching product metadata:", error);
@@ -99,28 +103,35 @@ export const generateMetadata = async (
 };
 
 const fetchItemData = async (itemSlugHere: string) => {
-  // fetch item data from backend using products API
-  const productResponse = await axios
-    .get(`/products/slug/${itemSlugHere}`)
-    .then((res) => res.data)
-    .catch((error: any) => {
-      axiosErrorLogger({ error });
-      return null;
-    });
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.evo-techbd.com/api/v1";
+  const fetchOptions = {
+    next: { revalidate: 3600 },
+    headers: { "Content-Type": "application/json" }
+  };
 
-  if (!productResponse || !productResponse.data) {
-    return null;
+  // fetch item data defensively using native ISR caching
+  let product = null;
+  try {
+    const res = await fetch(`${backendUrl}/products/slug/${itemSlugHere}`, fetchOptions);
+    if (res.ok) {
+      const data = await res.json();
+      product = data?.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch product:", error);
   }
 
-  const product = productResponse.data;
+  if (!product) return null;
 
   // Fetch additional product images
-  const imagesResponse = await axios
-    .get(`/products/${product._id}/images`)
-    .then((res) => res.data)
-    .catch(() => null);
-
-  const additionalImages = imagesResponse?.data || [];
+  let additionalImages = [];
+  try {
+    const res = await fetch(`${backendUrl}/products/${product._id}/images`, fetchOptions);
+    if (res.ok) {
+      const data = await res.json();
+      additionalImages = data?.data || [];
+    }
+  } catch (e) {}
 
   // Format images for ThumbnailCarousel component
   const allImageUrls = [
@@ -129,10 +140,7 @@ const fetchItemData = async (itemSlugHere: string) => {
   ].filter(Boolean);
 
   const formattedImages = allImageUrls.map((url: string, index: number) => {
-    // Find the matching image from additionalImages to get the real _id
-    const matchingImage = additionalImages.find(
-      (img: any) => img.imageUrl === url,
-    );
+    const matchingImage = additionalImages.find((img: any) => img.imageUrl === url);
     return {
       imgid: matchingImage?._id || `img-${index}`,
       imgsrc: url,
@@ -162,35 +170,37 @@ const fetchItemData = async (itemSlugHere: string) => {
     typeof normalizedLowStockThreshold === "number" &&
     Number.isFinite(normalizedLowStockThreshold);
 
-  // Fetch feature headers, subsections, specifications, and color variations
+  // Fetch feature headers, subsections, specifications, and color variations concurrently with ISR cache
   const [
-    featureHeadersResponse,
-    featureSubsectionsResponse,
-    specificationsResponse,
-    colorVariationsResponse,
-  ] = await Promise.all([
-    axios
-      .get(`/products/${product._id}/feature-headers`)
-      .then((res) => res.data)
-      .catch(() => null),
-    axios
-      .get(`/products/${product._id}/feature-subsections`)
-      .then((res) => res.data)
-      .catch(() => null),
-    axios
-      .get(`/products/${product._id}/specifications`)
-      .then((res) => res.data)
-      .catch(() => null),
-    axios
-      .get(`/products/${product._id}/color-variations`)
-      .then((res) => res.data)
-      .catch(() => null),
+    featureHeadersRes,
+    featureSubsectionsRes,
+    specificationsRes,
+    colorVariationsRes,
+  ] = await Promise.allSettled([
+    fetch(`${backendUrl}/products/${product._id}/feature-headers`, fetchOptions),
+    fetch(`${backendUrl}/products/${product._id}/feature-subsections`, fetchOptions),
+    fetch(`${backendUrl}/products/${product._id}/specifications`, fetchOptions),
+    fetch(`${backendUrl}/products/${product._id}/color-variations`, fetchOptions),
   ]);
 
-  const featureHeaders = featureHeadersResponse?.data || [];
-  const featureSubsections = featureSubsectionsResponse?.data || [];
-  const specifications = specificationsResponse?.data || [];
-  const colorVariations = colorVariationsResponse?.data || [];
+  const extractData = async (resPromise: PromiseSettledResult<Response>) => {
+    if (resPromise.status === 'fulfilled' && resPromise.value.ok) {
+        try {
+            const data = await resPromise.value.json();
+            return data?.data || [];
+        } catch(e) {
+            return [];
+        }
+    }
+    return [];
+  };
+
+  const [featureHeaders, featureSubsections, specifications, colorVariations] = await Promise.all([
+      extractData(featureHeadersRes),
+      extractData(featureSubsectionsRes),
+      extractData(specificationsRes),
+      extractData(colorVariationsRes)
+  ]);
 
   const itemInfo = {
     itemid: product._id,

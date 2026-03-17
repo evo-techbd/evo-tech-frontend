@@ -7,14 +7,19 @@ import { RiHeartLine } from "react-icons/ri";
 import { IoCart } from "react-icons/io5";
 import { toast } from "sonner";
 import { CustomToast } from "@/components/ui/customtoast";
-import axiosLocal from "@/utils/axios/axiosLocal";
-import axiosErrorLogger from "@/components/error/axios_error";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { setCartData } from "@/store/slices/cartslice";
+import type { CartItem } from "@/schemas/cartSchema";
 
 
 const ProductCard2 = ({ eachItem }: { eachItem: any; }) => {
 
     const threshold = eachItem.i_lowstockthreshold || 3;
     const isLowStock = eachItem.i_stock !== undefined && eachItem.i_stock <= threshold && eachItem.i_stock > 0;
+
+    const dispatch = useDispatch<AppDispatch>();
+    const cartItems = useSelector((state: RootState) => state.shoppingcart.cartdata);
 
     const setCartLocal = (cartLocal: any) => {
         localStorage.setItem('evoFrontCart', JSON.stringify(cartLocal));
@@ -27,52 +32,60 @@ const ProductCard2 = ({ eachItem }: { eachItem: any; }) => {
     };
 
 
-    const handleAddToCart = async () => {
+    const handleAddToCart = () => {
+        const currentCart = cartItems || [];
 
-        const localevoFrontCart = localStorage.getItem('evoFrontCart');
-        const parsedCart = localevoFrontCart ? JSON.parse(localevoFrontCart) : null;
+        // Check if item already exists in cart limits
+        const existingItemIndex = currentCart.findIndex(
+            (item) => item.item_id === eachItem.itemid && (item.item_isPreOrder ?? false) === false
+        );
 
-        let cartreqbody = {};
-        if (parsedCart && parsedCart.ctoken) {
-            cartreqbody = {
-                cart_t: parsedCart.ctoken,
+        let updatedCart: CartItem[];
+
+        if (existingItemIndex >= 0) {
+            const existingItem = currentCart[existingItemIndex];
+            const newQuantity = existingItem.item_quantity + 1;
+
+            if (newQuantity > 9999) {
+                toast.error("Limit reached, cannot add more at this time");
+                return;
+            }
+
+            updatedCart = [...currentCart];
+            updatedCart[existingItemIndex] = {
+                ...existingItem,
+                item_quantity: newQuantity,
             };
-        }
 
-    const cartResponse = await axiosLocal.post(`/api/shopping/add`, {
-            item_id: eachItem.itemid,
-            item_quantity: 1,
-            item_price: eachItem.i_price,
-            item_color: "",
-            ...cartreqbody,
-        }
-        ).then((res) => res.data)
-            .catch((error: any) => {
-                axiosErrorLogger({ error });
-                return null;
-            });
-
-
-        if (cartResponse && cartResponse.message && cartResponse.message === "Item added to cart") {
-            const cartlocal: { items: any[]; ctoken: string } = { items: cartResponse.cartdata, ctoken: cartResponse.ctoken };
-            setCartLocal(cartlocal);
-            toast.success("Item added to cart");
-        } else if (cartResponse && cartResponse.message && cartResponse.message === "Item already in cart, quantity updated") {
-            const cartlocal: { items: any[]; ctoken: string } = { items: cartResponse.cartdata, ctoken: cartResponse.ctoken };
-            setCartLocal(cartlocal);
             toast.custom((t) => (
                 <CustomToast toastid={t}
                     title={<span className="text-blue-600">Item already in cart, quantity increased</span>}
                     description="visit the cart to update"
                 />
-            ), {
-                duration: 4000,
-            })
-        } else if (cartResponse && cartResponse.message && cartResponse.message === "Quantity limit reached") {
-            toast.error("Limit reached, cannot add more at this time");
+            ), { duration: 4000 });
         } else {
-            toast.error("Something went wrong");
+            const newCartItem: CartItem = {
+                item_id: eachItem.itemid,
+                item_name: eachItem.i_name,
+                item_slug: eachItem.i_slug,
+                item_mainimg: eachItem.i_mainimg || "/assets/placeholder-product.svg",
+                item_category: eachItem.i_category || "",
+                item_subcategory: eachItem.i_subcategory || "",
+                item_brand: eachItem.i_brand || "",
+                item_weight: eachItem.i_weight || 0,
+                item_color: null,
+                item_quantity: 1,
+                item_price: eachItem.i_price,
+                item_isPreOrder: false,
+                item_preorderPrice: eachItem.i_preorderprice || null,
+            };
+
+            updatedCart = [...currentCart, newCartItem];
+            toast.success("Item added to cart");
         }
+
+        dispatch(setCartData(updatedCart));
+        setCartLocal({ items: updatedCart });
     };
     
 

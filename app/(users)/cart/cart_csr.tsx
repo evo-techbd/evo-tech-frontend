@@ -46,7 +46,7 @@ const CartListing = () => {
     window.dispatchEvent(event);
   };
 
-  const handleBatchUpdate = useCallback(async () => {
+  const handleBatchUpdate = useCallback(() => {
     if (pendingUpdates.length === 0 || isUpdating) return;
 
     dispatch(setIsUpdating(true));
@@ -57,56 +57,32 @@ const CartListing = () => {
     const localevoFrontCart = localStorage.getItem("evoFrontCart");
     const parsedCart = localevoFrontCart ? JSON.parse(localevoFrontCart) : null;
 
-    let cartreqbody = {};
-    if (parsedCart && parsedCart.ctoken) {
-      cartreqbody = {
-        cart_t: parsedCart.ctoken,
-      };
-    }
-
-    const payload = {
-      items: updatesToProcess.map((update) => ({
-        item_id: update.item_id,
-        item_color: update.item_color,
-        item_quantity: update.new_quantity,
-      })),
-      ...cartreqbody,
-    };
-
     try {
-      const response = await axiosLocal.put("/api/cart/updatebatch", payload);
+      // Update the Redux store with the successful updates
+      dispatch(updateCartItemQuantities(updatesToProcess));
+      dispatch(clearPendingUpdates());
 
-      if (response.data && response.data.message === "Cart items updated") {
-        // Update the Redux store with the successful updates
-        dispatch(updateCartItemQuantities(updatesToProcess));
-        dispatch(clearPendingUpdates());
+      toast.success("Cart updated");
 
-        toast.success("Cart updated");
-
-        // Update local storage using the stored updates
-        if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
-          const updatedCartItems = parsedCart.items.map((item: any) => {
-            const update = updatesToProcess.find(
-              (u) =>
-                u.item_id === item.item_id && u.item_color === item.item_color
-            );
-            return update
-              ? { ...item, item_quantity: update.new_quantity }
-              : item;
-          });
-          const updatedCart = {
-            items: updatedCartItems,
-            ctoken: response.data.ctoken,
-          };
-          setCartLocal(updatedCart);
-        }
+      // Update local storage using the stored updates
+      if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
+        const updatedCartItems = parsedCart.items.map((item: any) => {
+          const update = updatesToProcess.find(
+            (u) =>
+              u.item_id === item.item_id && u.item_color === item.item_color
+          );
+          return update
+            ? { ...item, item_quantity: update.new_quantity }
+            : item;
+        });
+        const updatedCart = {
+          items: updatedCartItems,
+          ctoken: parsedCart.ctoken || "",
+        };
+        setCartLocal(updatedCart);
       }
     } catch (error: any) {
-      if (error.response) {
-        toast.error(error.response.data.message || "Failed to update cart");
-      } else {
-        toast.error("Failed to update cart");
-      }
+      toast.error("Failed to update cart");
       // Clear pending updates on error to prevent infinite retry
       dispatch(clearPendingUpdates());
     } finally {
@@ -157,14 +133,7 @@ const CartListing = () => {
         ? JSON.parse(localevoFrontCart)
         : null;
 
-      let cartreqbody: { cart_t?: string } = {};
-      if (parsedCart && parsedCart.ctoken) {
-        cartreqbody = {
-          cart_t: parsedCart.ctoken,
-        };
-      }
-
-      const removeItemLocally = (ctokenOverride?: string) => {
+      const removeItemLocally = () => {
         dispatch(removeCartItem({ item_id: itemId, item_color: itemColor }));
 
         if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
@@ -174,46 +143,17 @@ const CartListing = () => {
           );
           const updatedCart = {
             items: updatedCartItems,
-            ctoken: ctokenOverride ?? parsedCart.ctoken ?? "",
+            ctoken: parsedCart.ctoken ?? "",
           };
           setCartLocal(updatedCart);
         }
       };
 
       try {
-        const shouldSyncServer = Boolean(cartreqbody.cart_t);
-
-        if (shouldSyncServer) {
-          const response = await axiosLocal.delete("/api/cart/remove", {
-            data: {
-              item_id: itemId,
-              item_color: itemColor,
-              ...cartreqbody,
-            },
-          });
-
-          if (response.data && response.data.message === "Cart item removed") {
-            removeItemLocally(response.data.ctoken);
-            toast.success("Item removed from cart");
-            return;
-          }
-
-          throw new Error("Unexpected response while removing cart item");
-        }
-
-        // Guest carts only exist locally, so just update Redux/localStorage
-        removeItemLocally(parsedCart?.ctoken);
+        removeItemLocally();
         toast.success("Item removed from cart");
       } catch (error: any) {
-        const status = error?.response?.status;
-        const message = error?.response?.data?.message;
-
-        if (status === 401 || status === 403) {
-          removeItemLocally(parsedCart?.ctoken);
-          toast.success("Item removed from cart");
-        } else {
-          toast.error(message || "Failed to remove item");
-        }
+        toast.error("Failed to remove item");
       } finally {
         dispatch(setIsUpdating(false));
       }

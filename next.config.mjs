@@ -54,6 +54,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: apiUrl,
   },
   images: {
+    unoptimized: true, // Bypass Vercel 5K Image Transformation limits (no Vercel processing)
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
@@ -90,6 +91,7 @@ const nextConfig = {
         hostname: "res.cloudinary.com",
       },
     ],
+    // Vercel disables qualities when unoptimized is true, but keeping here for documentation
     qualities: [75, 90, 100],
   },
 };

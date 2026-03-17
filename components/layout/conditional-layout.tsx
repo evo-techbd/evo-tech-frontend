@@ -3,10 +3,15 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer/footer";
+import { isDown } from "@/lib/site-config";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
+  // Hooks must always be called unconditionally (React rules)
   const pathname = usePathname();
-  
+
+  // 🚧 Maintenance mode — skip ALL layout chrome, show just the maintenance page
+  if (isDown) return <>{children}</>;
+
   // Check if we're on admin routes
   const isAdminRoute = pathname.startsWith('/control') || pathname.startsWith('/admin');
   

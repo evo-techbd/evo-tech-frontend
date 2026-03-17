@@ -1,19 +1,24 @@
 
 
-import axios from "@/utils/axios/axios";
+// import axios from "@/utils/axios/axios";
 import DynamicProductSlider from "@/components/carousels/dynamic-product-slider";
-import axiosErrorLogger from "@/components/error/axios_error";
+// import axiosErrorLogger from "@/components/error/axios_error";
 
 const getFeaturedSections = async () => {
-    // This endpoint is public (no authentication required)
-    // Use regular axios instance instead of axiosIntercept to avoid auth token issues
-  
+  // Use native fetch with ISR caching to save Vercel CPU limits
   try {
-     const response = await axios.get("/products/featured-sections");
-     console.log(response);
-     return response.data.data;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL 
+    const res = await fetch(`${backendUrl}/products/featured-sections`, {
+      next: { revalidate: 3600 }, // Cache statically for 1 hour
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    if (!res.ok) throw new Error("Failed to fetch featured sections");
+    
+    const data = await res.json();
+    return data?.data || [];
   } catch (error) {
-     axiosErrorLogger({ error });
+     console.error("Failed to fetch featured sections:", error);
      return [];
   }
 };

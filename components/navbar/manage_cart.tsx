@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { m, LazyMotion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { setCartData } from "@/store/slices/cartslice";
+import { setCartData, removeCartItem } from "@/store/slices/cartslice";
 import { calculateCartBreakdown } from "@/utils/cart-totals";
 
 const LoadMotionFeatures = () =>
@@ -35,6 +35,35 @@ const ManageCart = () => {
     dueNowSubtotal,
     hasPreOrderItems,
   } = cartBreakdown;
+
+  const handleRemoveItem = (itemId: string, itemColor: string | null) => {
+    // 1. Remove from Redux immediately for fast UI
+    dispatch(removeCartItem({ item_id: itemId, item_color: itemColor }));
+
+    // 2. Remove from LocalStorage
+    const localevoFrontCart = localStorage.getItem("evoFrontCart");
+    const parsedCart = localevoFrontCart ? JSON.parse(localevoFrontCart) : null;
+
+    if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
+      const updatedCartItems = parsedCart.items.filter(
+        (item: any) =>
+          !(item.item_id === itemId && item.item_color === itemColor)
+      );
+
+      const updatedCart = {
+        items: updatedCartItems,
+        ctoken: parsedCart.ctoken ?? "",
+      };
+
+      // Set it exactly like setCartLocal does but directly here
+      localStorage.setItem("evoFrontCart", JSON.stringify(updatedCart));
+
+      const event = new CustomEvent("localStorageChange", {
+        detail: { key: "evoFrontCart", newValue: updatedCart },
+      });
+      window.dispatchEvent(event);
+    }
+  };
 
   useEffect(() => {
     const fetchCartDB = async () => {
@@ -168,8 +197,18 @@ const ManageCart = () => {
                       cartData.map((eachCartItem: any, index: number) => (
                         <div
                           key={`cartitem${index}`}
-                          className="flex w-full h-fit py-2 border-t border-[#dddbda] gap-1"
+                          className="relative flex w-full h-fit py-2 border-t border-[#dddbda] gap-1 group/item"
                         >
+                          {/* (X) Remove Button */}
+                          <button
+                            onClick={() => handleRemoveItem(eachCartItem.item_id, eachCartItem.item_color)}
+                            className="absolute top-2 right-0 p-1 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
+                            aria-label="Remove item"
+                            title="Remove from cart"
+                          >
+                            <IoClose className="w-4 h-4" />
+                          </button>
+
                           <div className="flex w-fit h-fit py-1">
                             <div
                               className="relative w-[45px] sm:w-[50px] aspect-square flex-none border border-stone-300 rounded-[3px] overflow-hidden focus:outline-none bg-[#ffffff]"
@@ -187,7 +226,7 @@ const ManageCart = () => {
                             </div>
                           </div>
 
-                          <div className="flex flex-col w-full h-fit px-2 py-1 gap-1 text-left font-inter font-[500] text-[12px] sm:text-[13px] leading-5 tracking-tight text-stone-600 break-words">
+                          <div className="flex flex-col w-full h-fit px-2 py-1 gap-1 text-left font-inter font-[500] text-[12px] sm:text-[13px] leading-5 tracking-tight text-stone-600 break-words pr-6">
                             <Link
                               href={`/items/${eachCartItem.item_slug}`}
                               className="w-full h-fit hover:text-[#0866FF]"
