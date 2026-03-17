@@ -146,7 +146,7 @@ const OrderTimeline = ({ status }: { status: string }) => {
     { key: "pending", label: "Pending" },
     { key: "confirmed", label: "Confirmed" },
     { key: "processing", label: "Processing" },
-    { key: "shipped", label: "Shipped" },
+    { key: "shipped", label: "Assigned to Rider" },
     { key: "delivered", label: "Delivered" },
   ];
 

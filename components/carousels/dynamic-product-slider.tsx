@@ -125,7 +125,7 @@ const DynamicProductSlider = ({
                           BDT {product.price.toLocaleString()}
                         </span>
                         {product.prevPrice && product.prevPrice > product.price ? (
-                          <span className="text-xs sm:text-sm text-stone-400 line-through">
+                          <span className="text-xs sm:text-sm text-red-500 line-through">
                             BDT{product.prevPrice.toLocaleString()}
                           </span>
                         ) : null}

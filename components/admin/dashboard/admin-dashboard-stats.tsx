@@ -340,7 +340,7 @@ export function AdminDashboardStats() {
                                 className={`w-2 h-2 rounded-full ${colors.dot}`}
                               />
                               <span className="text-xs capitalize text-stone-600">
-                                {status}
+                                {status === 'shipped' ? 'Assigned to Rider' : status}
                               </span>
                             </div>
                             <span

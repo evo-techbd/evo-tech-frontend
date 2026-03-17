@@ -7,6 +7,7 @@ import { OrderWithItemsType } from "@/schemas/admin/sales/orderSchema";
 import { useOrdersData } from "@/hooks/use-orders-data";
 import { toast } from "sonner";
 import { BsArrowCounterclockwise } from "react-icons/bs";
+import { StatusDropdown } from "@/components/admin/orders/comps/status-dropdown";
 import OrderTableRowActions from "@/components/admin/orders/comps/order-table-row-actions";
 import { usePendingOrders } from "@/contexts/PendingOrdersContext";
 
@@ -26,15 +27,51 @@ const OrdersDataTable = () => {
         await refreshPendingCount();
     }, [refetch, refreshPendingCount]);
 
-    // Create columns with refetch function passed to row actions
+    // Create columns with refetch function passed to row actions and status dropdowns
     const columnsWithRefetch = React.useMemo(() => 
-        ordersColumns.map(col => {
-            if (col.id === 'actions') {
+        ordersColumns.map((col: any) => {
+            const columnId = col.id || col.accessorKey;
+            
+            if (columnId === 'actions') {
                 return {
                     ...col,
                     cell: ({ row }: any) => (
                         <OrderTableRowActions row={row} onDataChange={handleRefetch} />
                     ),
+                };
+            }
+            if (columnId === 'orderStatus') {
+                return {
+                    ...col,
+                    cell: ({ row }: any) => {
+                        const original = row.original;
+                        const orderId = original._id || original.orderid;
+                        return (
+                            <StatusDropdown
+                                orderId={orderId}
+                                type="orderStatus"
+                                currentStatus={row.getValue("orderStatus") as string || "pending"}
+                                onDataChange={handleRefetch}
+                            />
+                        );
+                    },
+                };
+            }
+            if (columnId === 'paymentStatus') {
+                return {
+                    ...col,
+                    cell: ({ row }: any) => {
+                        const original = row.original;
+                        const orderId = original._id || original.orderid;
+                        return (
+                            <StatusDropdown
+                                orderId={orderId}
+                                type="paymentStatus"
+                                currentStatus={row.getValue("paymentStatus") as string || "pending"}
+                                onDataChange={handleRefetch}
+                            />
+                        );
+                    },
                 };
             }
             return col;

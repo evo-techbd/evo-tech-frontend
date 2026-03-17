@@ -157,7 +157,7 @@ export default function OrderHistoryPage() {
                                                         ? 'bg-red-100 text-red-800'
                                                         : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
-                                                    {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
+                                                    {order.orderStatus === 'shipped' ? 'Assigned to Rider' : order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
                                                 </span>
                                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                                     order.paymentStatus === 'paid'

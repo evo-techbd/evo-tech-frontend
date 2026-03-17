@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Trash2, RotateCcw, AlertTriangle, Package, Tag, Layers, Sliders, Ticket, Star, Loader2, RefreshCw } from "lucide-react";
+import { Trash2, RotateCcw, AlertTriangle, Package, Tag, Layers, Sliders, Ticket, Star, Loader2, RefreshCw, ShoppingCart } from "lucide-react";
 import axios from "@/utils/axios/axios";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,7 @@ import {
     DialogTitle,
 } from "@/components/ui/evo_dialog";
 
-export type TrashEntityType = "product" | "brand" | "category" | "subcategory" | "coupon" | "review" | "user";
+export type TrashEntityType = "product" | "brand" | "category" | "subcategory" | "coupon" | "review" | "user" | "order";
 
 export interface TrashItemType {
     _id: string;
@@ -39,6 +39,7 @@ const ENTITY_LABELS: Record<TrashEntityType, string> = {
     coupon: "Coupon",
     review: "Review",
     user: "User",
+    order: "Order",
 };
 
 const ENTITY_ICONS: Record<TrashEntityType, React.ReactNode> = {
@@ -49,6 +50,7 @@ const ENTITY_ICONS: Record<TrashEntityType, React.ReactNode> = {
     coupon: <Ticket className="w-4 h-4" />,
     review: <Star className="w-4 h-4" />,
     user: <Tag className="w-4 h-4" />,
+    order: <ShoppingCart className="w-4 h-4" />,
 };
 
 const ENTITY_COLORS: Record<TrashEntityType, string> = {
@@ -59,6 +61,7 @@ const ENTITY_COLORS: Record<TrashEntityType, string> = {
     coupon: "bg-orange-100 text-orange-700 border-orange-200",
     review: "bg-yellow-100 text-yellow-700 border-yellow-200",
     user: "bg-red-100 text-red-700 border-red-200",
+    order: "bg-indigo-100 text-indigo-700 border-indigo-200",
 };
 
 function formatTimeAgo(dateString: string) {

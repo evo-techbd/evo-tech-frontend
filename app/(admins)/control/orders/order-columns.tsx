@@ -107,7 +107,7 @@ export const ordersColumns: ColumnDef<OrderWithItemsType>[] = [
           variant={getBadgeVariant(status) as any}
           className={`capitalize whitespace-nowrap`}
         >
-          {status?.replaceAll("_", " ") || "N/A"}
+          {status === "shipped" ? "Assigned to Rider" : status?.replaceAll("_", " ") || "N/A"}
         </Badge>
       );
     },

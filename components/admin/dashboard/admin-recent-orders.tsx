@@ -161,7 +161,7 @@ export function AdminRecentOrders() {
                     <Badge
                       className={`text-xs ${getStatusColor(order.status)}`}
                     >
-                      {order.status.charAt(0).toUpperCase() +
+                      {order.status === 'shipped' ? 'Assigned to Rider' : order.status.charAt(0).toUpperCase() +
                         order.status.slice(1)}
                     </Badge>
                   </div>

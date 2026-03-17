@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -1091,7 +1091,7 @@ const CheckoutParts = () => {
                             {` below.`}
                           </li>
                           <li>{`Once your order is placed, payment status will be updated in a while.`}</li>
-                          <li>{`Orders will be processed and shipped only after the payment has been successfully received.`}</li>
+                          <li>{`Orders will be processed and assigned to a rider only after the payment has been successfully received.`}</li>
                         </ul>
                       </div>
                     </div>
@@ -1159,7 +1159,7 @@ const CheckoutParts = () => {
                             {` below.`}
                           </li>
                           <li>{`Once your order is placed, payment status will be updated in a while.`}</li>
-                          <li>{`Orders will be processed and shipped only after the payment has been successfully received.`}</li>
+                          <li>{`Orders will be processed and assigned to a rider only after the payment has been successfully received.`}</li>
                         </ul>
                       </div>
                     </div>

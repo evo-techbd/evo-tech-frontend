@@ -31,11 +31,13 @@ import {
 import { useSearchParamsState } from "@/hooks/use-search-params-state";
 import { useOrdersData } from "@/hooks/use-orders-data";
 import { exportOrdersToCSV, exportOrdersToExcel } from "./comps/export-orders";
+import { useTaxonomy } from "@/hooks/use-taxonomy";
 
 const orderFilterSchema = z.object({
   search: z.string().optional(),
   order_status: z.string().optional(),
   payment_status: z.string().optional(),
+  category: z.string().optional(),
 });
 
 type OrderFilterValues = z.infer<typeof orderFilterSchema>;
@@ -45,6 +47,9 @@ const OrdersHeaderClient = () => {
     basePath: "/control/orders",
   });
 
+  const { getCategoriesForSelect } = useTaxonomy();
+  const categories = useMemo(() => getCategoriesForSelect(), [getCategoriesForSelect]);
+
   const { orders } = useOrdersData();
   const [isExporting, setIsExporting] = useState(false);
 
@@ -53,6 +58,7 @@ const OrdersHeaderClient = () => {
     search: getParam("search"),
     order_status: getParam("order_status"),
     payment_status: getParam("payment_status"),
+    category: getParam("category"),
   }), [getParam]);
 
   const form = useForm<OrderFilterValues>({
@@ -104,6 +110,7 @@ const OrdersHeaderClient = () => {
       search: data.search || null,
       order_status: data.order_status || null,
       payment_status: data.payment_status || null,
+      category: data.category || null,
     });
   };
 
@@ -113,6 +120,7 @@ const OrdersHeaderClient = () => {
       search: "",
       order_status: "",
       payment_status: "",
+      category: "",
     });
 
     // Reset all search params
@@ -126,7 +134,7 @@ const OrdersHeaderClient = () => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full flex flex-col xl:flex-row gap-4 items-end xl:items-center"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             <FormField
               control={form.control}
               name="search"
@@ -176,7 +184,7 @@ const OrdersHeaderClient = () => {
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="confirmed">Confirmed</SelectItem>
                         <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="shipped">Assigned to Rider</SelectItem>
                         <SelectItem value="delivered">Delivered</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>
@@ -214,9 +222,49 @@ const OrdersHeaderClient = () => {
                           Clear
                         </Button>
                         <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="partial">Partial</SelectItem>
                         <SelectItem value="paid">Paid</SelectItem>
                         <SelectItem value="failed">Failed</SelectItem>
                         <SelectItem value="refunded">Refunded</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="text-xs">
+                        <SelectValue
+                          placeholder={
+                            <span className="text-stone-400 text-xs">
+                              Select category
+                            </span>
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs bg-stone-500/10 text-rose-500 mb-2"
+                          onClick={() => {
+                            field.onChange("");
+                          }}
+                        >
+                          Clear
+                        </Button>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormControl>

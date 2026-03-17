@@ -34,7 +34,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     if (urlColor !== selectedColor) {
       setSelectedColor(urlColor);
     }
-  }, [searchParams]);
+  }, [searchParams, selectedColor]);
 
   // Fetch real-time stock data for color variations
   useEffect(() => {
@@ -112,6 +112,8 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   const handleColorSelect = (color: string) => {
     // Update local state immediately for instant response
     setSelectedColor(color);
+    // Reset quantity to 1 when a new color is selected
+    setItemQuantity(1);
     
     // Update URL in background without triggering re-render
     const newQueryString = createQueryString("color", color);

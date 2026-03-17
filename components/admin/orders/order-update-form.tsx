@@ -40,8 +40,6 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
   const form = useForm<OrderStatusesUpdateType>({
     resolver: zodResolver(orderStatusesUpdateSchema),
     defaultValues: {
-      orderStatus: orderData.orderStatus,
-      paymentStatus: orderData.paymentStatus,
       trackingCode: orderData.trackingCode || "",
       subtotal: orderData.subtotal,
       discount: orderData.discount,
@@ -63,10 +61,6 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
     try {
       // Filter out undefined values and empty strings for trackingCode
       const updateData: any = {};
-      if (data.orderStatus !== undefined)
-        updateData.orderStatus = data.orderStatus;
-      if (data.paymentStatus !== undefined)
-        updateData.paymentStatus = data.paymentStatus;
       if (data.trackingCode !== undefined) {
         updateData.trackingCode = data.trackingCode || null;
       }
@@ -145,62 +139,7 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full flex flex-col gap-4"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-            <FormField
-              control={form.control}
-              name="orderStatus"
-              render={({ field }) => (
-                <FormItem>
-                  <p className="text-xs font-medium whitespace-nowrap">
-                    Order Status
-                  </p>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="text-xs bg-white">
-                        <SelectValue placeholder="Select order status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="shipped">Shipped</SelectItem>
-                        <SelectItem value="delivered">Delivered</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="paymentStatus"
-              render={({ field }) => (
-                <FormItem>
-                  <p className="text-xs font-medium whitespace-nowrap">
-                    Payment Status
-                  </p>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="text-xs bg-white">
-                        <SelectValue placeholder="Select payment status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="partial">Partial</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                        <SelectItem value="refunded">Refunded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full md:w-1/2">
             <FormField
               control={form.control}
               name="trackingCode"

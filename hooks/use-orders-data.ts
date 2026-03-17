@@ -51,14 +51,16 @@ export function useOrdersData(): UseOrdersDataReturn {
             const search = searchParams.get('search');
             const order_status = searchParams.get('order_status');
             const payment_status = searchParams.get('payment_status');
+            const category = searchParams.get('category');
             const page = searchParams.get('page');
             const limit = searchParams.get('limit');
 
             const requestedPage = page ? parseInt(page) : 1;
 
             if (search) queryParams.set('search', search);
-            if (order_status) queryParams.set('order_status', order_status);
-            if (payment_status) queryParams.set('payment_status', payment_status);
+            if (order_status) queryParams.set('orderStatus', order_status);
+            if (payment_status) queryParams.set('paymentStatus', payment_status);
+            if (category) queryParams.set('category', category);
             if (page) queryParams.set('page', page);
             if (limit) queryParams.set('limit', limit);
 

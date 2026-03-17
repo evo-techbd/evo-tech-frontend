@@ -99,7 +99,7 @@ const OrderConfirmationPage = async ({
           <div className="flex items-center gap-2 animate-in fade-in duration-500">
             <IoCheckmarkCircle className="w-5 h-5 text-emerald-600" />
             <span className="text-emerald-600">
-              {"Your order has been shipped and is on its way!"}
+              {"Your order has been assigned to a rider and is on its way!"}
             </span>
           </div>
         );

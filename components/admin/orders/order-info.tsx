@@ -56,7 +56,7 @@ const getOrderStatusBadge = (status: string) => {
     pending: { variant: "customdefault" as const, text: "Pending" },
     confirmed: { variant: "confirmed" as const, text: "Confirmed" },
     processing: { variant: "processing" as const, text: "Processing" },
-    shipped: { variant: "shipped" as const, text: "Shipped" },
+    shipped: { variant: "shipped" as const, text: "Assigned to Rider" },
     delivered: { variant: "delivered" as const, text: "Delivered" },
     cancelled: { variant: "failed" as const, text: "Cancelled" },
   };
