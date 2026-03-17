@@ -216,9 +216,9 @@ const AddProductForm = () => {
               initialQuality: 0.8,
             });
             formdata.append("mainImage", compressedMainImage);
-            console.log(
-              `Main image compressed: ${(mainImageFile.size / 1024).toFixed(0)}KB -> ${(compressedMainImage.size / 1024).toFixed(0)}KB`,
-            );
+            // console.log(
+            //   `Main image compressed: ${(mainImageFile.size / 1024).toFixed(0)}KB -> ${(compressedMainImage.size / 1024).toFixed(0)}KB`,
+            // );
           } catch (error) {
             console.error("Failed to compress main image:", error);
             toast.dismiss(compressionToast);
@@ -289,9 +289,9 @@ const AddProductForm = () => {
             formdata.append("additionalImages", file);
           });
 
-          console.log(
-            `Additional images compressed: ${data.additional_images.length} files`,
-          );
+          // console.log(
+          //   `Additional images compressed: ${data.additional_images.length} files`,
+          // );
         } catch (error) {
           console.error("Failed to compress additional images:", error);
           toast.dismiss(compressionToast);

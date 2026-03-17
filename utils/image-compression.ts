@@ -78,9 +78,9 @@ export async function compressImage(
             }
 
             const sizeMB = blob.size / (1024 * 1024);
-            console.log(
-              `Compression attempt: ${sizeMB.toFixed(2)}MB at quality ${quality}`,
-            );
+            // console.log(
+            //   `Compression attempt: ${sizeMB.toFixed(2)}MB at quality ${quality}`,
+            // );
 
             if (sizeMB <= maxSizeMB || quality <= 0.3) {
               break;

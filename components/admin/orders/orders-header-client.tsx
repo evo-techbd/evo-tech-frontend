@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -16,12 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,9 +25,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSearchParamsState } from "@/hooks/use-search-params-state";
-import { useOrdersData } from "@/hooks/use-orders-data";
 import { exportOrdersToCSV, exportOrdersToExcel } from "./comps/export-orders";
 import { useTaxonomy } from "@/hooks/use-taxonomy";
+import { OrderWithItemsType } from "@/schemas/admin/sales/orderSchema";
 
 const orderFilterSchema = z.object({
   search: z.string().optional(),
@@ -43,23 +39,56 @@ const orderFilterSchema = z.object({
 type OrderFilterValues = z.infer<typeof orderFilterSchema>;
 
 const OrdersHeaderClient = () => {
-  const { updateSearchParams, resetSearchParams, getParam } = useSearchParamsState({
-    basePath: "/control/orders",
-  });
+  const searchParams = useSearchParams();
+  const { updateSearchParams, resetSearchParams, getParam } =
+    useSearchParamsState({
+      basePath: "/control/orders",
+    });
 
   const { getCategoriesForSelect } = useTaxonomy();
-  const categories = useMemo(() => getCategoriesForSelect(), [getCategoriesForSelect]);
+  const categories = useMemo(
+    () => getCategoriesForSelect(),
+    [getCategoriesForSelect],
+  );
 
-  const { orders } = useOrdersData();
   const [isExporting, setIsExporting] = useState(false);
 
+  const fetchOrdersForExport = async (): Promise<OrderWithItemsType[]> => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("includeItems", "true");
+
+    const response = await fetch(`/api/admin/orders?${params.toString()}`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch export data (${response.status})`);
+    }
+
+    const payload = await response.json();
+
+    if (Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    if (Array.isArray(payload.data?.result)) {
+      return payload.data.result;
+    }
+
+    return [];
+  };
+
   // Memoize default values to prevent unnecessary re-renders
-  const defaultValues = useMemo(() => ({
-    search: getParam("search"),
-    order_status: getParam("order_status"),
-    payment_status: getParam("payment_status"),
-    category: getParam("category"),
-  }), [getParam]);
+  const defaultValues = useMemo(
+    () => ({
+      search: getParam("search"),
+      order_status: getParam("order_status"),
+      payment_status: getParam("payment_status"),
+      category: getParam("category"),
+    }),
+    [getParam],
+  );
 
   const form = useForm<OrderFilterValues>({
     resolver: zodResolver(orderFilterSchema),
@@ -72,15 +101,18 @@ const OrdersHeaderClient = () => {
   }, [defaultValues, form]);
 
   const handleExportCSV = async () => {
-    if (!orders || orders.length === 0) {
-      toast.error("No orders to export");
-      return;
-    }
-
     try {
       setIsExporting(true);
-      await exportOrdersToCSV(orders);
-      toast.success(`Successfully exported ${orders.length} orders to CSV`);
+      const exportOrders = await fetchOrdersForExport();
+      if (!exportOrders || exportOrders.length === 0) {
+        toast.error("No orders to export");
+        return;
+      }
+
+      await exportOrdersToCSV(exportOrders);
+      toast.success(
+        `Successfully exported ${exportOrders.length} orders to CSV`,
+      );
     } catch (error) {
       toast.error("Failed to export orders to CSV");
     } finally {
@@ -89,15 +121,18 @@ const OrdersHeaderClient = () => {
   };
 
   const handleExportExcel = async () => {
-    if (!orders || orders.length === 0) {
-      toast.error("No orders to export");
-      return;
-    }
-
     try {
       setIsExporting(true);
-      await exportOrdersToExcel(orders);
-      toast.success(`Successfully exported ${orders.length} orders to Excel`);
+      const exportOrders = await fetchOrdersForExport();
+      if (!exportOrders || exportOrders.length === 0) {
+        toast.error("No orders to export");
+        return;
+      }
+
+      await exportOrdersToExcel(exportOrders);
+      toast.success(
+        `Successfully exported ${exportOrders.length} orders to Excel`,
+      );
     } catch (error) {
       toast.error("Failed to export orders to Excel");
     } finally {
@@ -184,7 +219,9 @@ const OrdersHeaderClient = () => {
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="confirmed">Confirmed</SelectItem>
                         <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="shipped">Assigned to Rider</SelectItem>
+                        <SelectItem value="shipped">
+                          Assigned to Rider
+                        </SelectItem>
                         <SelectItem value="delivered">Delivered</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>

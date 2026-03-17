@@ -295,18 +295,18 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
       }
 
       // Additional new images - compress before upload
-      console.log(
-        "OnSubmit - additional_newimages:",
-        data.additional_newimages,
-      );
+      // console.log(
+      //   "OnSubmit - additional_newimages:",
+      //   data.additional_newimages,
+      // );
       if (
         data.additional_newimages &&
         Array.isArray(data.additional_newimages) &&
         data.additional_newimages.length > 0
       ) {
-        console.log(
-          `Processing ${data.additional_newimages.length} additional images`,
-        );
+        // console.log(
+        //   `Processing ${data.additional_newimages.length} additional images`,
+        // );
 
         // Compress all additional images
         const compressedAdditionalImages = await compressImages(
@@ -324,16 +324,16 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
         );
 
         compressedAdditionalImages.forEach((file: File) => {
-          console.log(
-            "Appending compressed file:",
-            file.name,
-            file.size,
-            file.type,
-          );
+          // console.log(
+          //   "Appending compressed file:",
+          //   file.name,
+          //   file.size,
+          //   file.type,
+          // );
           formdata.append("additionalImages", file);
         });
       } else {
-        console.log("No additional_newimages found or not an array");
+        // console.log("No additional_newimages found or not an array");
       }
 
       // Done compressing
@@ -632,7 +632,7 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
                   <FileUploader
                     value={field.value}
                     onValueChange={(val) => {
-                      console.log("FileUploader onValueChange:", val);
+                      // console.log("FileUploader onValueChange:", val);
                       field.onChange(val);
                     }}
                     maxFileCount={10}

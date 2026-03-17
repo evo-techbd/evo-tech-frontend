@@ -92,7 +92,13 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   };
 
   const qtyIncrement = () => {
-    Number(itemQuantity) < 9999 && setItemQuantity(Number(itemQuantity) + 1);
+    const max = maxStock;
+    const current = Number(itemQuantity);
+    if (max !== null && current >= max) {
+      toast.error(`Only ${max} units available`);
+      return;
+    }
+    current < 9999 && setItemQuantity(current + 1);
   };
 
   const qtyDecrement = () => {
@@ -176,6 +182,13 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
       return;
     }
 
+    // Check against max stock for non-pre-order products
+    if (maxStock !== null && Number(itemQuantity) > maxStock) {
+      toast.error(`Only ${maxStock} units available in stock`);
+      setItemQuantity(maxStock);
+      return;
+    }
+
     // Get current cart from Redux/localStorage
     const currentCart = cartItems || [];
 
@@ -195,7 +208,15 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
       const existingItem = currentCart[existingItemIndex];
       const newQuantity = existingItem.item_quantity + Number(itemQuantity);
 
-      // Optional: Add quantity limit check
+      // Check against stock cap (accumulated quantity)
+      if (maxStock !== null && newQuantity > maxStock) {
+        toast.error(
+          `Cannot add more. Only ${maxStock} units in stock and you already have ${existingItem.item_quantity} in cart.`
+        );
+        return;
+      }
+
+      // Fallback hard limit
       if (newQuantity > 9999) {
         toast.error("Quantity limit reached (max: 9999)");
         return;
@@ -237,6 +258,10 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
         item_price: singleitem.i_price,
         item_isPreOrder: false,
         item_preorderPrice: singleitem.i_preorderprice || null,
+        // Stock fields — used by assessCartItemStock in the cart page for cap enforcement
+        item_stock: maxStock,
+        item_instock: singleitem.i_instock ?? true,
+        item_lowstockthreshold: singleitem.i_lowstockthreshold ?? null,
       };
 
       updatedCart = [...currentCart, newCartItem];
@@ -346,6 +371,10 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
         item_price: singleitem.i_price,
         item_isPreOrder: false,
         item_preorderPrice: singleitem.i_preorderprice || null,
+        // Stock fields — used by assessCartItemStock in the cart page for cap enforcement
+        item_stock: maxStock,
+        item_instock: singleitem.i_instock ?? true,
+        item_lowstockthreshold: singleitem.i_lowstockthreshold ?? null,
       };
 
       updatedCart = [...currentCart, newCartItem];
@@ -451,6 +480,10 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
         item_price: itemPrice,
         item_isPreOrder: true,
         item_preorderPrice: singleitem.i_preorderprice || null,
+        // No stock cap for pre-orders
+        item_stock: null,
+        item_instock: singleitem.i_instock ?? true,
+        item_lowstockthreshold: singleitem.i_lowstockthreshold ?? null,
       };
 
       updatedCart = [...currentCart, newCartItem];
@@ -471,6 +504,25 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   // Check if product has color variations
   const hasColorVariations =
     realTimeColorVariations && realTimeColorVariations.length > 0;
+
+  // Determine the effective max stock for quantity cap
+  // - For color-variant products: use the selected color variation's stock
+  // - For simple products: use root i_stock
+  // - For pre-order items: no cap (null)
+  const maxStock: number | null = (() => {
+    if (singleitem.i_ispreorder) return null; // pre-orders are not stock-capped
+    if (hasColorVariations && itemColorfromURL) {
+      const variation = realTimeColorVariations.find(
+        (cv: any) => cv.colorName.toLowerCase() === itemColorfromURL.toLowerCase()
+      );
+      return variation && typeof variation.stock === 'number' ? variation.stock : null;
+    }
+    // Simple product
+    if (typeof singleitem.i_stock === 'number' && singleitem.i_stock > 0) {
+      return singleitem.i_stock;
+    }
+    return null; // no stock info → no cap
+  })();
 
   // Format color variations for ColorSelector component
   const formattedColors = hasColorVariations
@@ -507,6 +559,23 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
                 ) : null;
               })()}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Stock display for simple products (no color variations) */}
+      {!hasColorVariations && (
+        <div className="text-[12px] text-stone-600">
+          {singleitem.i_instock ? (
+            typeof singleitem.i_stock === 'number' && singleitem.i_stock > 0 ? (
+              <span className="text-emerald-600 font-[500]">
+                {singleitem.i_stock} units available
+              </span>
+            ) : (
+              <span className="text-emerald-600 font-[500]">In Stock</span>
+            )
+          ) : (
+            <span className="text-red-500 font-[500]">Out of Stock</span>
           )}
         </div>
       )}

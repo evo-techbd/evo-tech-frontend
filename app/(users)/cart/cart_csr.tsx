@@ -235,7 +235,7 @@ const CartListing = () => {
               </div>
             )}
 
-            {!cartStockSummary.hasBlockingIssues &&
+            {/* {!cartStockSummary.hasBlockingIssues &&
               cartStockSummary.warningIssues.length > 0 && (
                 <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                   <p className="flex items-center gap-2 text-[13px] font-semibold">
@@ -251,7 +251,7 @@ const CartListing = () => {
                     ))}
                   </ul>
                 </div>
-              )}
+              )} */}
 
             <div className="flex flex-col w-full h-fit gap-2 overflow-x-auto scrollbar-custom">
               <div className="flex w-full h-fit gap-1">

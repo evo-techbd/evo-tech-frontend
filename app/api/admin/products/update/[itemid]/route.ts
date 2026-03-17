@@ -11,7 +11,7 @@ export async function POST(
     const axioswithIntercept = await axiosIntercept();
     const { itemid } = await params;
 
-    console.log('Update product API called with itemid:', itemid);
+    // console.log('Update product API called with itemid:', itemid);
 
     try {
         const formdata = await request.formData();

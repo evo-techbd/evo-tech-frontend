@@ -20,9 +20,9 @@ export const calculatePayment = (
     // console.log("🛒 Cart items for calculation:", cartItems);
 
     totalWeight = cartItems.reduce((acc, item) => {
-      console.log("Item:", item);
+      // console.log("Item:", item);
       const weight = Number(item.item_weight) || 0;
-      console.log("Weight:", weight);
+      // console.log("Weight:", weight);
       const quantity = Number(item.item_quantity) || 0;
       return acc + weight * quantity;
     }, 0);

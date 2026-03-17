@@ -9,13 +9,14 @@ const getFeaturedSections = async () => {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL 
     const res = await fetch(`${backendUrl}/products/featured-sections`, {
-      next: { revalidate: 3600 }, // Cache statically for 1 hour
+      next: { revalidate: 1800 }, // Cache statically for 30 minutes
       headers: { "Content-Type": "application/json" }
     });
     
     if (!res.ok) throw new Error("Failed to fetch featured sections");
     
     const data = await res.json();
+
     return data?.data || [];
   } catch (error) {
      console.error("Failed to fetch featured sections:", error);
