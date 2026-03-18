@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -42,9 +43,7 @@ const DynamicProductSlider = ({
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
-          <h3 className="text-2xl font-bold text-stone-800">
-            {title}
-          </h3>
+          <h3 className="text-2xl font-bold text-stone-800">{title}</h3>
           <div className="flex items-center gap-3 border-[1px] border-stone-400 rounded-xl">
             <Link
               href={viewMoreUrl}
@@ -86,11 +85,11 @@ const DynamicProductSlider = ({
                 {/* Product Image Container - Match ProductGridCard */}
                 <div className="relative w-full aspect-square bg-stone-50 overflow-hidden">
                   <Image
-                    src={product.image || "/placeholder.png"}
+                    src={getOptimizedImageUrl(product.image, 350, 75)}
                     alt={product.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                    sizes="(max-width: 640px) 80vw, (max-width: 768px) 45vw, (max-width: 1024px) 35vw, 28vw"
+                    width={350}
+                    height={350}
+                    className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out w-full h-full"
                   />
 
                   {/* Out of Stock Overlay */}
@@ -110,7 +109,8 @@ const DynamicProductSlider = ({
                   </h3>
 
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    {product.preOrderPrice && product.preOrderPrice < product.price ? (
+                    {product.preOrderPrice &&
+                    product.preOrderPrice < product.price ? (
                       <>
                         <span className="text-[13px] font-semibold text-cyan-600">
                           BDT {product.preOrderPrice.toLocaleString()}
@@ -124,7 +124,8 @@ const DynamicProductSlider = ({
                         <span className="text-[13px] font-medium text-stone-800">
                           BDT {product.price.toLocaleString()}
                         </span>
-                        {product.prevPrice && product.prevPrice > product.price ? (
+                        {product.prevPrice &&
+                        product.prevPrice > product.price ? (
                           <span className="text-xs sm:text-sm text-red-500 line-through">
                             BDT{product.prevPrice.toLocaleString()}
                           </span>

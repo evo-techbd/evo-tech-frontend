@@ -2,6 +2,7 @@
 
 import "swiper/css/bundle";
 import Image from "next/image";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -102,13 +103,13 @@ const BannerCarousel = ({ uniqueid, slides }: BannerCarouselProps) => {
                   <div className="relative flex items-center justify-center w-full lg:w-[55%] h-[180px] sm:h-[220px] lg:h-[340px] order-1 lg:order-2">
                     <div className="relative w-full h-full flex items-center justify-center px-4 lg:px-8">
                       <Image
-                        src={slide.image}
+                        src={getOptimizedImageUrl(slide.image, 800, 85)}
                         alt={slide.title || "Hero banner"}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 60vw"
+                        width={800}
+                        height={300}
                         priority={index === 0}
                         draggable="false"
-                        className="object-contain object-center drop-shadow-xl"
+                        className="object-contain object-center drop-shadow-xl w-full h-full"
                       />
                     </div>
                   </div>

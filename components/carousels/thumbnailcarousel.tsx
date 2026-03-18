@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, memo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import {
   m,
   AnimatePresence,
@@ -117,14 +118,13 @@ const ThumbnailCarousel = ({
             lensSize={360}
           >
             <Image
-              src={selectedImg.imgsrc}
+              src={getOptimizedImageUrl(selectedImg.imgsrc, 360, 85)}
               alt={selectedImg.imgtitle}
-              fill
-              quality={100}
+              width={360}
+              height={360}
               draggable="false"
-              sizes="100%"
               priority
-              className="object-contain object-center"
+              className="object-contain object-center w-full h-full"
             />
           </ZoomLens>
         )}
@@ -163,10 +163,9 @@ const ThumbnailCarousel = ({
                 <Image
                   src={image.imgsrc}
                   alt={image.imgtitle}
-                  fill
-                  quality={90}
+                  width={60}
+                  height={60}
                   draggable="false"
-                  sizes="100%"
                   priority
                   className="object-contain object-center"
                 />

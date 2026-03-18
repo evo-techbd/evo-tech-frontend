@@ -15,12 +15,12 @@ const shippingTypes: { [key: string]: string } = {
   home_delivery: "Home Delivery",
   pickup_point: "Pickup Point",
   express_delivery: "Express Delivery",
-  regular_delivery: "Regular Delivery"
+  regular_delivery: "Regular Delivery",
 };
 
 const paymentMethods: { [key: string]: string } = {
   cash_on_delivery: "Cash on Delivery",
-  cod:"Cash On Delivery",
+  cod: "Cash On Delivery",
   bkash: "bKash",
   nagad: "Nagad",
   credit_card: "Credit Card",
@@ -76,21 +76,34 @@ const getOrderStatusBadge = (status: string) => {
   );
 };
 
-const OrderInfo = ({ orderData }: { orderData: OrderWithItemsType }) => {
-  const [paymentStatus, setPaymentStatus] = useState(orderData.paymentStatus);
-  const [orderStatus, setOrderStatus] = useState(orderData.orderStatus);
-  const [amountPaid, setAmountPaid] = useState(orderData.amountPaid || 0);
-  const [totalPayable, setTotalPayable] = useState(orderData.totalPayable);
-  const [currentOrderData, setCurrentOrderData] = useState(orderData);
+const OrderInfo = ({
+  orderData: initialOrderData,
+}: {
+  orderData: OrderWithItemsType;
+}) => {
+  const [paymentStatus, setPaymentStatus] = useState(
+    initialOrderData.paymentStatus,
+  );
+  const [orderStatus, setOrderStatus] = useState(initialOrderData.orderStatus);
+  const [amountPaid, setAmountPaid] = useState(
+    initialOrderData.amountPaid || 0,
+  );
+  const [totalPayable, setTotalPayable] = useState(
+    initialOrderData.totalPayable,
+  );
+  const [currentOrderData, setCurrentOrderData] = useState(initialOrderData);
+
+  // Always render from the latest local state after updates.
+  const orderData = currentOrderData;
 
   useEffect(() => {
     // Update all states when orderData changes
-    setPaymentStatus(orderData.paymentStatus);
-    setOrderStatus(orderData.orderStatus);
-    setAmountPaid(orderData.amountPaid || 0);
-    setTotalPayable(orderData.totalPayable);
-    setCurrentOrderData(orderData);
-  }, [orderData]);
+    setPaymentStatus(initialOrderData.paymentStatus);
+    setOrderStatus(initialOrderData.orderStatus);
+    setAmountPaid(initialOrderData.amountPaid || 0);
+    setTotalPayable(initialOrderData.totalPayable);
+    setCurrentOrderData(initialOrderData);
+  }, [initialOrderData]);
 
   const handleStatusUpdate = (updatedOrder: OrderWithItemsType) => {
     setPaymentStatus(updatedOrder.paymentStatus);

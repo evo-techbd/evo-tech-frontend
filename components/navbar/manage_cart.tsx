@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import Link from "next/link";
 import { currencyFormatBDT } from "@/lib/all_utils";
 import { IoCart, IoClose } from "react-icons/io5";
@@ -21,12 +22,12 @@ const ManageCart = () => {
   const [cartTrayOpen, setCartTrayOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const cartData = useSelector(
-    (state: RootState) => state.shoppingcart.cartdata
+    (state: RootState) => state.shoppingcart.cartdata,
   );
   const dispatch = useDispatch<AppDispatch>();
   const cartBreakdown = useMemo(
     () => calculateCartBreakdown(cartData),
-    [cartData]
+    [cartData],
   );
   const {
     cartSubTotal,
@@ -47,7 +48,7 @@ const ManageCart = () => {
     if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
       const updatedCartItems = parsedCart.items.filter(
         (item: any) =>
-          !(item.item_id === itemId && item.item_color === itemColor)
+          !(item.item_id === itemId && item.item_color === itemColor),
       );
 
       const updatedCart = {
@@ -201,7 +202,12 @@ const ManageCart = () => {
                         >
                           {/* (X) Remove Button */}
                           <button
-                            onClick={() => handleRemoveItem(eachCartItem.item_id, eachCartItem.item_color)}
+                            onClick={() =>
+                              handleRemoveItem(
+                                eachCartItem.item_id,
+                                eachCartItem.item_color,
+                              )
+                            }
                             className="absolute top-2 right-0 p-1 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
                             aria-label="Remove item"
                             title="Remove from cart"
@@ -215,13 +221,17 @@ const ManageCart = () => {
                               aria-label={`${eachCartItem.item_name}`}
                             >
                               <Image
-                                src={eachCartItem.item_mainimg}
+                                // src={eachCartItem.item_mainimg}
                                 alt={`item image`}
-                                fill
-                                quality={100}
+                                width={50}
+                                height={50}
+                                src={getOptimizedImageUrl(
+                                  eachCartItem.item_mainimg,
+                                  50,
+                                  75,
+                                )}
                                 draggable="false"
-                                sizes="100%"
-                                className="object-cover object-center"
+                                className="w-full h-full object-cover rounded-[2px]"
                               />
                             </div>
                           </div>
@@ -237,12 +247,12 @@ const ManageCart = () => {
                               <p className="w-full h-fit text-stone-900 text-[12px]">{`Color: ${eachCartItem.item_color}`}</p>
                             )}
                             <p className="w-full h-fit font-[600] text-stone-900 tracking-tight text-[12px]">{`BDT ${currencyFormatBDT(
-                              eachCartItem.item_price
+                              eachCartItem.item_price,
                             )} x ${
                               eachCartItem.item_quantity
                             } = ${currencyFormatBDT(
                               eachCartItem.item_price *
-                                eachCartItem.item_quantity
+                                eachCartItem.item_quantity,
                             )}`}</p>
                           </div>
                         </div>
@@ -270,18 +280,18 @@ const ManageCart = () => {
                         <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-stone-600">
                           <span>{`Deposit (50%) due now:`}</span>
                           <span className="font-[600] text-stone-800">{`${currencyFormatBDT(
-                            preOrderDepositDue
+                            preOrderDepositDue,
                           )} BDT`}</span>
                         </div>
                         <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-stone-600">
                           <span>{`Balance later:`}</span>
                           <span className="font-[600] text-stone-800">{`${currencyFormatBDT(
-                            preOrderBalanceDue
+                            preOrderBalanceDue,
                           )} BDT`}</span>
                         </div>
                         <p className="text-[10px] sm:text-[11px] text-stone-500">
                           {`Approx. due at checkout (before shipping/fees): ${currencyFormatBDT(
-                            dueNowSubtotal
+                            dueNowSubtotal,
                           )} BDT`}
                         </p>
                       </div>
@@ -314,7 +324,7 @@ const ManageCart = () => {
               </AnimatePresence>
             </LazyMotion>
           </>,
-          document.body
+          document.body,
         )}
     </>
   );

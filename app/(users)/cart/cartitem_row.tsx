@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import QuantityAdjusterBttnless from "@/components/quantity-adjuster-bttnless";
 import { currencyFormatBDT } from "@/lib/all_utils";
 import { BsFillTrashFill } from "react-icons/bs";
@@ -26,15 +27,15 @@ const CartItemRow = memo(
     handleCartItemQuantityChange: (
       itemId: string,
       itemColor: string | null,
-      newQuantity: number
+      newQuantity: number,
     ) => void;
     handleCartItemRemove: (
       itemId: string,
-      itemColor: string | null
+      itemColor: string | null,
     ) => Promise<void>;
   }) => {
     const [itemQuantity, setItemQuantity] = useState<number | string>(
-      effectiveQuantity
+      effectiveQuantity,
     );
 
     const quantityOverride =
@@ -42,7 +43,7 @@ const CartItemRow = memo(
 
     const stockStatus = useMemo(
       () => assessCartItemStock(cartitem, quantityOverride),
-      [cartitem, quantityOverride]
+      [cartitem, quantityOverride],
     );
 
     const enforceQuantityLimits = useCallback(
@@ -61,7 +62,7 @@ const CartItemRow = memo(
           toast.warning(
             `Only ${stockStatus.availableStock} ${
               stockStatus.availableStock === 1 ? "unit" : "units"
-            } available.`
+            } available.`,
           );
           return stockStatus.availableStock;
         }
@@ -73,7 +74,7 @@ const CartItemRow = memo(
         stockStatus.availableStock,
         quantityOverride,
         effectiveQuantity,
-      ]
+      ],
     );
 
     useEffect(() => {
@@ -92,7 +93,7 @@ const CartItemRow = memo(
       handleCartItemQuantityChange(
         cartitem.item_id,
         cartitem.item_color,
-        itemQuantity
+        itemQuantity,
       );
     }, [
       itemQuantity,
@@ -152,13 +153,13 @@ const CartItemRow = memo(
               aria-label={`${cartitem.item_name}`}
             >
               <Image
-                src={cartitem.item_mainimg}
+                // src={cartitem.item_mainimg}
                 alt={`item image`}
-                fill
-                quality={100}
+                width={50}
+                height={50}
                 draggable="false"
-                sizes="100%"
-                className="object-cover object-center"
+                src={getOptimizedImageUrl(cartitem.item_mainimg, 50, 75)}
+                className="object-cover object-center w-full h-full"
               />
             </div>
           </div>
@@ -173,7 +174,7 @@ const CartItemRow = memo(
               <p className="w-full h-fit text-stone-900 text-[12px] leading-5">{`Color: ${cartitem.item_color}`}</p>
             )}
             <p className="lg:hidden w-full h-fit text-stone-500 text-[12px] leading-4 tracking-tight">{`BDT ${currencyFormatBDT(
-              cartitem.item_price
+              cartitem.item_price,
             )} x ${effectiveQuantity}`}</p>
             {(stockStatus.isOutOfStock || stockStatus.exceedsStock) && (
               <p className="flex items-center gap-1 text-[11px] text-red-600">
@@ -227,13 +228,13 @@ const CartItemRow = memo(
           </div>
           <div className="hidden md:flex justify-end items-center flex-initial min-w-[50px] w-[300px] px-2 py-1 text-stone-600 tracking-tight border-l border-[#dddbda]">
             {`BDT ${currencyFormatBDT(
-              cartitem.item_price * effectiveQuantity
+              cartitem.item_price * effectiveQuantity,
             )}`}
           </div>
         </div>
       </>
     );
-  }
+  },
 );
 
 CartItemRow.displayName = "CartItemRow";

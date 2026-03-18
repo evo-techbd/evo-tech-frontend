@@ -5,9 +5,9 @@ import axios from "@/utils/axios/axios";
 import axiosErrorLogger from "@/components/error/axios_error";
 import Image from "next/image";
 import Link from "next/link";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
-import { IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -107,16 +107,15 @@ const PopularProductsSlider = ({
         <h3 className="text-lg sm:text-2xl font-semibold text-stone-800">
           {title}
         </h3>
-          <div className="flex items-center gap-3 border-[1px] border-stone-400 rounded-xl">
-            <Link
-              href="/products-and-accessories"
-              className="text-sm text-stone-500 p-2 px-4 hover:bg-brand-600 rounded-xl font-semibold hover:text-white transition-colors"
-            >
-              More 
-              <ExternalLink size={14} className="inline-block ml-1 mb-0.5" />
-            </Link>
-            
-          </div>
+        <div className="flex items-center gap-3 border-[1px] border-stone-400 rounded-xl">
+          <Link
+            href="/products-and-accessories"
+            className="text-sm text-stone-500 p-2 px-4 hover:bg-brand-600 rounded-xl font-semibold hover:text-white transition-colors"
+          >
+            More
+            <ExternalLink size={14} className="inline-block ml-1 mb-0.5" />
+          </Link>
+        </div>
       </div>
 
       <Swiper
@@ -143,35 +142,35 @@ const PopularProductsSlider = ({
               {/* Image Container - Match ProductGridCard aspect ratio */}
               <div className="relative w-full aspect-square overflow-hidden bg-stone-50">
                 <Image
-                  src={p.image}
+                  src={getOptimizedImageUrl(p.image, 350, 75)}
                   alt={p.name}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  width={350}
+                  height={350}
+                  className="object-cover group-hover:scale-110 transition-transform duration-500 w-full h-full"
                 />
               </div>
 
-                <div className="p-4 bg-stone-50 border-t border-stone-100">
-                  <h4 className="text-sm font-semibold text-stone-800 line-clamp-2 mb-2 group-hover:text-brand-600 transition-colors leading-snug min-h-[2.5rem]">
-                    {p.name}
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    {p.preOrderPrice && p.preOrderPrice < p.price ? (
-                      <>
-                        <div className="text-sm font-semibold text-cyan-600">
-                          BDT {p.preOrderPrice?.toLocaleString()}
-                        </div>
-                        <div className="text-sm text-red-500 line-through">
-                          BDT {p.price?.toLocaleString()}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-sm font-semibold text-stone-900">
+              <div className="p-4 bg-stone-50 border-t border-stone-100">
+                <h4 className="text-sm font-semibold text-stone-800 line-clamp-2 mb-2 group-hover:text-brand-600 transition-colors leading-snug min-h-[2.5rem]">
+                  {p.name}
+                </h4>
+                <div className="flex items-center gap-2">
+                  {p.preOrderPrice && p.preOrderPrice < p.price ? (
+                    <>
+                      <div className="text-sm font-semibold text-cyan-600">
+                        BDT {p.preOrderPrice?.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-red-500 line-through">
                         BDT {p.price?.toLocaleString()}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  ) : (
+                    <div className="text-sm font-semibold text-stone-900">
+                      BDT {p.price?.toLocaleString()}
+                    </div>
+                  )}
                 </div>
+              </div>
             </Link>
           </SwiperSlide>
         ))}

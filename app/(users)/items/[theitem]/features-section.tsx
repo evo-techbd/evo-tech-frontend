@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import { m, Variants } from "framer-motion";
 import parse from "html-react-parser";
 
@@ -16,12 +17,17 @@ const ItemFeaturesSection = ({
   framerSectionVariants: Variants;
 }) => {
   // Find the first header with a banner image (sorted by sortOrder)
-  const sortedHeaders = [...ifeaturesdata.header].sort((a, b) => a.sortOrder - b.sortOrder);
+  const sortedHeaders = [...ifeaturesdata.header].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
   const headerWithBanner = sortedHeaders.find((h) => h.bannerImage);
 
   // Use header banner if available, otherwise fall back to legacy banner prop
   const bannerToShow = headerWithBanner?.bannerImage
-    ? { imgsrc: headerWithBanner.bannerImage, imgtitle: headerWithBanner.title || "Feature banner" }
+    ? {
+        imgsrc: headerWithBanner.bannerImage,
+        imgtitle: headerWithBanner.title || "Feature banner",
+      }
     : ifeaturesdata.banner;
 
   return (
@@ -37,15 +43,11 @@ const ItemFeaturesSection = ({
           aria-label="Feature section banner"
         >
           <Image
-            src={bannerToShow.imgsrc}
-            alt={bannerToShow.imgtitle || "Feature banner"}
+            src={getOptimizedImageUrl(bannerToShow.imgsrc, 1500, 80)}
+            alt={bannerToShow.imgtitle}
             width={1500}
             height={300}
-            quality={100}
-            draggable="false"
-            sizes="100%"
-            className="object-cover object-center w-full h-auto max-w-full"
-            priority
+            className="w-full h-auto rounded-lg"
           />
         </m.div>
       )}
@@ -85,8 +87,9 @@ const ItemFeaturesSection = ({
             initial="initial"
             whileInView="visible"
             viewport={{ once: true, amount: 0.05 }}
-            className={`flex flex-col items-center w-full h-fit my-4 md:my-6 gap-x-2 gap-y-4 sm:justify-evenly sm:items-start ${index % 2 === 0 ? "sm:flex-row" : "sm:flex-row-reverse"
-              }`}
+            className={`flex flex-col items-center w-full h-fit my-4 md:my-6 gap-x-2 gap-y-4 sm:justify-evenly sm:items-start ${
+              index % 2 === 0 ? "sm:flex-row" : "sm:flex-row-reverse"
+            }`}
           >
             <div className="flex flex-col justify-center w-full max-w-[600px] min-h-[275px] md:min-h-[310px] lg:min-h-[430px] min-[1120px]:min-h-[450px] h-fit gap-4 px-4 py-3 md:px-6 lg:px-9 lg:py-6 text-[12px] sm:text-[13px] lg:text-[15px] leading-5 sm:leading-[1.375rem] lg:leading-6 font-[400] tracking-[-0.02em]">
               <p className="w-full font-[600] text-stone-800 text-[18px] leading-6 lg:text-[22px] lg:leading-8 xl:text-[26px] xl:leading-10 my-3">
@@ -103,11 +106,10 @@ const ItemFeaturesSection = ({
                 <Image
                   src={subsection.imageUrl}
                   alt={`feature ${index + 1} image`}
-                  fill
-                  quality={100}
+                  width={450}
+                  height={450}
                   draggable="false"
-                  sizes="100%"
-                  className="object-cover object-center"
+                  className="object-cover object-center w-full h-full"
                 />
               </div>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -51,11 +51,29 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
   });
 
   // Watch for changes in totalPayable and amountPaid
-  const totalPayable = form.watch("totalPayable") ?? 0;
+  const subtotal = form.watch("subtotal") ?? 0;
+  const discount = form.watch("discount") ?? 0;
+  const deliveryCharge = form.watch("deliveryCharge") ?? 0;
+  const additionalCharge = form.watch("additionalCharge") ?? 0;
+  const formTotalPayable = form.watch("totalPayable") ?? 0;
   const amountPaid = form.watch("amountPaid") ?? 0;
 
+  const calculatedTotalPayable = Math.max(
+    subtotal - discount + deliveryCharge + additionalCharge,
+    0,
+  );
+
+  useEffect(() => {
+    if (Math.abs(formTotalPayable - calculatedTotalPayable) < 0.01) return;
+
+    form.setValue("totalPayable", calculatedTotalPayable, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }, [calculatedTotalPayable, form, formTotalPayable]);
+
   // Calculate due amount (accounting for the pay amount that will be added)
-  const amountDue = totalPayable - amountPaid - payAmount;
+  const amountDue = calculatedTotalPayable - amountPaid - payAmount;
 
   const onSubmit = async (data: OrderStatusesUpdateType) => {
     try {
@@ -70,8 +88,7 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
         updateData.deliveryCharge = data.deliveryCharge;
       if (data.additionalCharge !== undefined)
         updateData.additionalCharge = data.additionalCharge;
-      if (data.totalPayable !== undefined)
-        updateData.totalPayable = data.totalPayable;
+      updateData.totalPayable = calculatedTotalPayable;
       if (data.amountPaid !== undefined) {
         // Add the pay amount to the current paid amount
         const finalAmountPaid = data.amountPaid + (payAmount || 0);
@@ -80,7 +97,7 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
         // Only auto-calculate payment status if not manually set by admin
         // and if the current payment status is one of the auto-calculated ones
         if (data.paymentStatus === undefined) {
-          const total = data.totalPayable || orderData.totalPayable;
+          const total = calculatedTotalPayable;
           const paid = finalAmountPaid;
 
           if (paid >= total) {
@@ -179,12 +196,10 @@ const OrderUpdateForm = ({ orderData, onSuccess }: OrderUpdateFormProps) => {
                         type="number"
                         placeholder="0"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value) || 0)
-                        }
-                        value={field.value || 0}
+                        value={calculatedTotalPayable}
+                        readOnly
                         disabled={form.formState.isSubmitting}
-                        className="text-xs bg-white placeholder:text-stone-400 placeholder:text-xs font-semibold"
+                        className="text-xs bg-stone-100 placeholder:text-stone-400 placeholder:text-xs font-semibold"
                       />
                     </FormControl>
                     <FormMessage />

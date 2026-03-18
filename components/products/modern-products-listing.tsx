@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { getOptimizedImageUrl } from "@/lib/image-loader";
 import EvoPagination from "@/components/ui/evo_pagination";
 import EvoDropdown from "@/components/ui/evo_dropdown";
 import { DropdownItem } from "@nextui-org/dropdown";
@@ -315,11 +316,11 @@ const ProductGridCard = ({ product }: { product: any }) => {
       {/* Image Container */}
       <div className="relative w-full aspect-square overflow-hidden bg-stone-50">
         <Image
-          src={product.i_mainimg || "/assets/placeholder-product.svg"}
+          src={getOptimizedImageUrl(product.i_mainimg, 400, 75)}
           alt={product.i_name}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
+          width={400}
+          height={400}
+          className="object-cover group-hover:scale-110 transition-transform duration-500 w-full h-full"
         />
 
         {/* Badges */}
@@ -392,7 +393,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
         {/* Price */}
         <div className="flex flex-col gap-0.5 mt-auto mb-1">
           <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
-            <span className="text-sm sm:text-base font-bold text-stone-900">
+            {/* <span className="text-sm sm:text-base font-bold text-stone-900">
               {product.i_preorderprice &&
               product.i_ispreorder &&
               product.i_preorderprice < product.i_price
@@ -411,7 +412,30 @@ const ProductGridCard = ({ product }: { product: any }) => {
                   <span className="text-xs font-bold text-red-500 line-through">
                     ৳{product.i_prevprice.toLocaleString()}
                   </span>
-                )}
+                )} */}
+            {product.i_preorderprice &&
+            product.i_preorderprice < product.i_price ? (
+              <>
+                <span className="text-[13px] font-semibold text-cyan-600">
+                  BDT {product.i_preorderprice.toLocaleString()}
+                </span>
+                <span className="text-xs sm:text-sm text-red-500 line-through">
+                  BDT {product.i_price.toLocaleString()}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-[13px] font-medium text-stone-800">
+                  BDT {product.i_price.toLocaleString()}
+                </span>
+                {product.i_prevprice &&
+                product.i_prevprice > product.i_price ? (
+                  <span className="text-xs sm:text-sm text-red-500 line-through">
+                    BDT{product.i_prevprice.toLocaleString()}
+                  </span>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
 
@@ -542,11 +566,11 @@ const ProductListCard = ({ product }: { product: any }) => {
       {/* Image Container */}
       <div className="relative w-full sm:w-64 h-64 sm:h-auto flex-shrink-0 overflow-hidden bg-stone-50">
         <Image
-          src={product.i_mainimg || "/assets/placeholder-product.svg"}
+          src={getOptimizedImageUrl(product.i_mainimg, 256, 75)}
           alt={product.i_name}
-          fill
-          sizes="256px"
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
+          width={256}
+          height={256}
+          className="object-cover group-hover:scale-110 transition-transform duration-500 w-full h-full"
         />
 
         {/* Badges */}
