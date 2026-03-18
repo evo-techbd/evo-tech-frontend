@@ -39,7 +39,9 @@ export function AdminRecentOrders() {
       setLoading(true);
       setError("");
 
-      const response = await axios.get("/dashboard/recent-orders");
+      const response = await axios.get("/dashboard/recent-orders", {
+        params: { limit: 5 },
+      });
 
       if (response.data.success) {
         const apiOrders = response.data.data || [];
@@ -54,14 +56,14 @@ export function AdminRecentOrders() {
           createdAt: order.createdAt,
         }));
 
-        setOrders(transformedOrders);
+        setOrders(transformedOrders.slice(0, 5));
       } else {
         setError("Failed to fetch orders");
       }
     } catch (error: any) {
       console.error(
         "❌ Error fetching orders:",
-        error.response?.data?.message || error.message
+        error.response?.data?.message || error.message,
       );
       setError(error.response?.data?.message || "Failed to load orders");
     } finally {
@@ -70,7 +72,7 @@ export function AdminRecentOrders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
-    useEffect(() => {
+  useEffect(() => {
     fetchRecentOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchRecentOrders]);
@@ -161,8 +163,10 @@ export function AdminRecentOrders() {
                     <Badge
                       className={`text-xs ${getStatusColor(order.status)}`}
                     >
-                      {order.status === 'shipped' ? 'Assigned to Rider' : order.status.charAt(0).toUpperCase() +
-                        order.status.slice(1)}
+                      {order.status === "shipped"
+                        ? "Assigned to Rider"
+                        : order.status.charAt(0).toUpperCase() +
+                          order.status.slice(1)}
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-600">

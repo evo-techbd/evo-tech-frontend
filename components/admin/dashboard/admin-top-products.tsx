@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import Image from "next/image";
 import { TrendingUp, Package } from "lucide-react";
 import { getCurrentUser } from "@/utils/cookies";
 import axios from "@/utils/axios/axios";
@@ -31,11 +30,13 @@ export function AdminTopProducts() {
     try {
       setLoading(true);
 
-      const response = await axios.get("/dashboard/top-products");
+      const response = await axios.get("/dashboard/top-products", {
+        params: { limit: 5 },
+      });
 
       if (response.data.success) {
         const apiProducts = response.data.data || [];
-        setProducts(apiProducts);
+        setProducts(apiProducts.slice(0, 5));
       }
     } catch (error) {
       console.error("Error fetching top products:", error);
@@ -45,7 +46,7 @@ export function AdminTopProducts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
-    useEffect(() => {
+  useEffect(() => {
     fetchTopProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchTopProducts]);

@@ -23,6 +23,7 @@ import {
 import { getCurrentUser } from "@/utils/cookies";
 import axios from "@/utils/axios/axios";
 import { DateRangeSelector, DateRangeType } from "./date-range-selector";
+import Link from "next/link";
 
 interface DashboardStats {
   totalRevenue: number;
@@ -260,6 +261,16 @@ export function AdminDashboardStats() {
             </Card>
           );
         })}
+      </div>
+
+      {/* View Profit Details Button */}
+      <div className="flex justify-end">
+        <Link href="/control/dashboard/profit-breakdown">
+          <button className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50">
+            <TrendingUp className="h-3.5 w-3.5" />
+            View Monthly Profit Details
+          </button>
+        </Link>
       </div>
 
       {/* Secondary Stats: Orders, Customers, Products */}

@@ -35,6 +35,9 @@ export const AdminStockAlerts = () => {
   const currentUser = getCurrentUser();
   const [notifications, setNotifications] = useState<StockNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+
+  const DEFAULT_VISIBLE_ALERTS = 3;
 
   const fetchNotifications = useCallback(async () => {
     if (!currentUser) {
@@ -47,7 +50,7 @@ export const AdminStockAlerts = () => {
       const response = await axios.get("/notifications/stock", {
         params: {
           status: "open",
-          limit: 5,
+          limit: 10,
         },
       });
 
@@ -68,6 +71,12 @@ export const AdminStockAlerts = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNotifications]);
 
+  useEffect(() => {
+    if (notifications.length <= DEFAULT_VISIBLE_ALERTS) {
+      setExpanded(false);
+    }
+  }, [notifications.length]);
+
   const handleMarkRead = useCallback(
     async (id: string) => {
       if (!currentUser) return;
@@ -79,10 +88,18 @@ export const AdminStockAlerts = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   const renderBody = () => {
+    const visibleNotifications = expanded
+      ? notifications
+      : notifications.slice(0, DEFAULT_VISIBLE_ALERTS);
+    const hiddenAlertsCount = Math.max(
+      notifications.length - DEFAULT_VISIBLE_ALERTS,
+      0,
+    );
+
     if (loading) {
       return (
         <div className="flex flex-col gap-3">
@@ -110,7 +127,19 @@ export const AdminStockAlerts = () => {
 
     return (
       <div className="flex flex-col gap-3">
-        {notifications.map((notification) => (
+        <div className="flex items-center justify-between rounded-md border border-red-100 bg-red-50 px-3 py-2">
+          <p className="text-xs font-medium text-red-700">
+            {notifications.length} open stock alert
+            {notifications.length > 1 ? "s" : ""}
+          </p>
+          {!expanded && hiddenAlertsCount > 0 && (
+            <p className="text-xs font-medium text-red-600">
+              +{hiddenAlertsCount} more alert{hiddenAlertsCount > 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+
+        {visibleNotifications.map((notification) => (
           <div
             key={notification._id}
             className={`rounded-md border px-4 py-3 ${
@@ -149,6 +178,22 @@ export const AdminStockAlerts = () => {
             </div>
           </div>
         ))}
+
+        {notifications.length > DEFAULT_VISIBLE_ALERTS && (
+          <div className="flex justify-center pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setExpanded((prev) => !prev)}
+            >
+              {expanded
+                ? "Show fewer alerts"
+                : `Show ${hiddenAlertsCount} more alert${hiddenAlertsCount > 1 ? "s" : ""}`}
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
