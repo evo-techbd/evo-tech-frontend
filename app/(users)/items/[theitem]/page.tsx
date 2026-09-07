@@ -346,7 +346,7 @@ const IndividualItem = async ({ params }: currentRouteProps) => {
                     itemInfo.i_preorderprice < itemInfo.i_price && (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-md">
                         <span className="text-[13px] md:text-[14px] leading-5 font-[500] text-brand-700">
-                          Pre-Order Price:
+                          Group Buy Price:
                         </span>
                         <span className="text-[15px] md:text-[16px] leading-5 font-[700] text-brand-600">{`BDT ${currencyFormatBDT(
                           itemInfo.i_preorderprice,

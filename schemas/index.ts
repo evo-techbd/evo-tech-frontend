@@ -1,7 +1,12 @@
 import { z } from "zod";
 
-export const checkoutSchema = z
-  .object({
+// Letters/digits/hyphen/slash, 6-25 chars, no spaces, must contain at least one digit.
+// Blocks junk like "AmiPorepayKorbo" while still accepting real bKash/bank references.
+const TRANSACTION_ID_REGEX = /^(?=.*\d)[A-Za-z0-9\-/]{6,25}$/;
+
+export const getCheckoutSchema = (hasPreOrderItems: boolean = false) =>
+  z
+    .object({
     fullName: z
       .string()
       .nonempty("Name is required")
@@ -131,11 +136,8 @@ export const checkoutSchema = z
       data.paymentMethod === "bkash" ||
       data.paymentMethod === "bank_transfer"
     ) {
-      if (
-        !data.transactionId ||
-        data.transactionId === "" ||
-        data.transactionId.trim() === ""
-      ) {
+      const trimmedTransactionId = (data.transactionId ?? "").trim();
+      if (!trimmedTransactionId) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
@@ -144,7 +146,28 @@ export const checkoutSchema = z
               : "Transaction ID is required for bank transfer",
           path: ["transactionId"],
         });
+      } else if (!TRANSACTION_ID_REGEX.test(trimmedTransactionId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Enter a valid transaction ID (letters/numbers only, no spaces, must include at least one digit)",
+          path: ["transactionId"],
+        });
       }
+    }
+
+    // Group Buy (pre-order) items require an online payment method so the
+    // advance/deposit is actually collected before the order is placed.
+    if (
+      hasPreOrderItems &&
+      (data.paymentMethod === "cod" || data.paymentMethod === "cop")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Cash on Delivery/Pickup isn't available — your order includes Group Buy item(s). Please pay via bKash or Bank Transfer.",
+        path: ["paymentMethod"],
+      });
     }
   });
 

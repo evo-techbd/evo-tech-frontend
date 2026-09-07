@@ -278,7 +278,7 @@ const ManageCart = () => {
                     {hasPreOrderItems && (
                       <div className="flex flex-col w-full h-fit gap-1 rounded-md border border-stone-200 bg-stone-50 px-3 py-2">
                         <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-stone-600">
-                          <span>{`Deposit (50%) due now:`}</span>
+                          <span>{`Group Buy deposit (50%) due now:`}</span>
                           <span className="font-[600] text-stone-800">{`${currencyFormatBDT(
                             preOrderDepositDue,
                           )} BDT`}</span>

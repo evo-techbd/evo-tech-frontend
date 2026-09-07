@@ -298,7 +298,7 @@ const CartListing = () => {
               {hasPreOrderItems && (
                 <div className="flex flex-col w-full h-fit gap-1 rounded-md border border-stone-200 bg-stone-50 px-3 py-2">
                   <div className="flex items-center justify-between text-[12px] sm:text-[13px] text-stone-600">
-                    <span>{`Deposit due now (50% of pre-order):`}</span>
+                    <span>{`Deposit due now (50% of Group Buy):`}</span>
                     <span className="font-[600] text-stone-800">
                       {`BDT ${currencyFormatBDT(preOrderDepositDue)}`}
                     </span>

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/evo_command";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { checkoutSchema } from "@/schemas";
+import { getCheckoutSchema } from "@/schemas";
 import type { CartItem } from "@/schemas/cartSchema";
 import { EvoFormInputError } from "@/components/error/form-input-error";
 import { districtsOfBD } from "@/utils/bd_districts";
@@ -45,7 +45,7 @@ import {
   type PickupPointDisplayType,
 } from "@/schemas/admin/setupconfig/homepage/pickupPoint/pickupPointSchema";
 
-type CheckoutFormValuesType = z.infer<typeof checkoutSchema>;
+type CheckoutFormValuesType = z.infer<ReturnType<typeof getCheckoutSchema>>;
 
 const CheckoutParts = () => {
   const [isCityPopoverOpen, setIsCityPopoverOpen] = useState(false);
@@ -69,6 +69,14 @@ const CheckoutParts = () => {
   const router = useRouter();
   const currentUser = useCurrentUser();
   const isAuthenticated = !!currentUser;
+
+  // Whether the cart contains any Group Buy (pre-order) item — needed by the
+  // checkout schema to block Cash on Delivery/Pickup for such orders.
+  const hasPreOrderItems = useMemo(
+    () => (cartItems ?? []).some((item) => item.item_isPreOrder),
+    [cartItems],
+  );
+
   const {
     register,
     control,
@@ -87,7 +95,7 @@ const CheckoutParts = () => {
       email: "",
       phone: "",
     },
-    resolver: zodResolver(checkoutSchema),
+    resolver: zodResolver(getCheckoutSchema(hasPreOrderItems)),
   });
 
   // Auto-populate email and phone for logged-in users
@@ -144,7 +152,6 @@ const CheckoutParts = () => {
     preOrderDepositDue,
     preOrderBalanceDue,
     dueNowSubtotal,
-    hasPreOrderItems,
     preOrderItemsCount,
     regularSubtotal,
   } = useMemo(() => {
@@ -986,6 +993,12 @@ const CheckoutParts = () => {
               </h3>
 
               <div className="flex flex-col w-full h-fit py-2 gap-2.5 border-t border-stone-300">
+                {hasPreOrderItems && (
+                  <p className="text-[11px] sm:text-[12px] leading-4 font-[500] text-amber-700 bg-amber-50 border border-amber-200 rounded-[4px] px-2 py-1.5">
+                    {`Your order includes Group Buy item(s), so Cash on Delivery/Pickup isn't available. Please pay via bKash or Bank Transfer.`}
+                  </p>
+                )}
+
                 {shippingType !== "pickup_point" &&
                   shippingType !== "express_delivery" && (
                     <div className="flex items-center w-full h-fit py-0.5">
@@ -994,11 +1007,12 @@ const CheckoutParts = () => {
                         id="cod"
                         {...register("paymentMethod")}
                         value="cod"
-                        className="mr-2 accent-stone-800"
+                        disabled={hasPreOrderItems}
+                        className="mr-2 accent-stone-800 disabled:cursor-not-allowed"
                       />
                       <label
                         htmlFor="cod"
-                        className="text-[12px] sm:text-[13px] font-[600] text-stone-700"
+                        className={`text-[12px] sm:text-[13px] font-[600] ${hasPreOrderItems ? "text-stone-400" : "text-stone-700"}`}
                       >
                         Cash on Delivery
                       </label>
@@ -1012,11 +1026,12 @@ const CheckoutParts = () => {
                       id="cop"
                       {...register("paymentMethod")}
                       value="cop"
-                      className="mr-2 accent-stone-800"
+                      disabled={hasPreOrderItems}
+                      className="mr-2 accent-stone-800 disabled:cursor-not-allowed"
                     />
                     <label
                       htmlFor="cop"
-                      className="text-[12px] sm:text-[13px] font-[600] text-stone-700"
+                      className={`text-[12px] sm:text-[13px] font-[600] ${hasPreOrderItems ? "text-stone-400" : "text-stone-700"}`}
                     >
                       Cash on Pickup
                     </label>
@@ -1395,13 +1410,13 @@ const CheckoutParts = () => {
           {hasPreOrderItems && (
             <div className="flex flex-col w-full h-fit gap-1 py-2 px-3 rounded-[6px] border border-stone-200 bg-stone-50">
               <div className="flex items-center justify-between text-[11px] sm:text-[12px] leading-4 font-[500] text-stone-600">
-                <span>{`Pre-order items:`}</span>
+                <span>{`Group Buy items:`}</span>
                 <span className="font-[600] text-stone-800">
                   {preOrderItemsCount}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[11px] sm:text-[12px] leading-4 font-[500] text-stone-600">
-                <span>{`Pre-order subtotal:`}</span>
+                <span>{`Group Buy subtotal:`}</span>
                 <span className="font-[600] text-stone-800">
                   {currencyFormatBDT(preOrderSubtotal)} BDT
                 </span>
@@ -1421,7 +1436,7 @@ const CheckoutParts = () => {
 
               <div className="mt-2 p-2 rounded border border-amber-200 bg-amber-50">
                 <p className="text-[11px] sm:text-[12px] leading-4 font-[600] text-amber-800 mb-1">
-                  {`� Before Placing a Pre-Order, Please Note:`}
+                  {`📌 Before Placing a Group Buy Order, Please Note:`}
                 </p>
                 <ul className="text-[10px] sm:text-[11px] leading-4 text-amber-700 space-y-0.5 list-none pl-0">
                   <li>{`✅ 50% advance payment is required, and the remaining balance must be paid on delivery.`}</li>
@@ -1477,7 +1492,7 @@ const CheckoutParts = () => {
             </div>
             {hasPreOrderItems && (
               <div className="flex items-center justify-between">
-                <span>{`Pre-order deposit today:`}</span>
+                <span>{`Group Buy deposit today:`}</span>
                 <span className="font-[600] text-stone-800">
                   {currencyFormatBDT(preOrderDepositDue)} BDT
                 </span>
@@ -1520,7 +1535,7 @@ const CheckoutParts = () => {
           {hasPreOrderItems && (
             <div className="flex items-center justify-between w-full h-fit py-0.5">
               <p className="text-[11px] sm:text-[12px] leading-4 font-[500] text-stone-600">
-                {`Pay Later (pre-order balance):`}
+                {`Pay Later (Group Buy balance):`}
               </p>
               <p className="text-[11px] sm:text-[12px] leading-4 font-[600] text-stone-800">
                 {currencyFormatBDT(payLaterAmount)} BDT

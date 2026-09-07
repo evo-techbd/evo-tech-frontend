@@ -934,15 +934,12 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-stone-800">
-              Pre-Order Settings
+              Group Buy Settings
             </h3>
             <p className="text-xs text-stone-500 mt-0.5">
-              Allow customers to pre-order this product
+              Allow customers to Group Buy this product
             </p>
           </div>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Allow customers to pre-order this product
-          </p>
         </div>
         <Controller
           control={control}
@@ -961,7 +958,7 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-amber-200">
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
-              Pre-Order Available Date
+              Group Buy Available Date
             </label>
             <input
               type="date"
@@ -978,7 +975,7 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
-              Pre-Order Price{" "}
+              Group Buy Price{" "}
               <span className="text-stone-500 text-xs font-normal">
                 (Optional)
               </span>

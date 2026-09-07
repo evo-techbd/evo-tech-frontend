@@ -281,7 +281,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
       };
       updatedCart = [...parsedCart.items, newItem];
       toast.success(
-        isPreOrder ? "Pre-order item added to cart" : "Item added to cart",
+        isPreOrder ? "Group Buy item added to cart" : "Item added to cart",
       );
     }
 
@@ -329,7 +329,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
             product.i_preorderprice &&
             product.i_preorderprice < product.i_price && (
               <span className="px-1.5 py-0.5 bg-cyan-600 text-white text-[10px] font-bold rounded">
-                Pre-Order
+                Group Buy
               </span>
             )} */}
           {discount > 0 && (
@@ -531,7 +531,7 @@ const ProductListCard = ({ product }: { product: any }) => {
       };
       updatedCart = [...parsedCart.items, newItem];
       toast.success(
-        isPreOrder ? "Pre-order item added to cart" : "Item added to cart",
+        isPreOrder ? "Group Buy item added to cart" : "Item added to cart",
       );
     }
 
@@ -579,7 +579,7 @@ const ProductListCard = ({ product }: { product: any }) => {
             product.i_preorderprice &&
             product.i_preorderprice < product.i_price && (
               <span className="px-2 py-1 bg-cyan-600 text-white text-xs font-bold rounded-md">
-                Pre-Order
+                Group Buy
               </span>
             )}
           {discount > 0 && (

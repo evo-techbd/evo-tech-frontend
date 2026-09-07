@@ -64,7 +64,7 @@ export const assessCartItemStock = (
   } else if (isLowStock && typeof availableStock === "number") {
     message = `Only ${availableStock} left in stock.`;
   } else if (isPreOrder) {
-    message = "Pre-order item - no stock validation required.";
+    message = "Group Buy item - no stock validation required.";
   }
 
   return {

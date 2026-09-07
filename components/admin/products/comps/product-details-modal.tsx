@@ -223,7 +223,7 @@ export function ProductDetailsModal({ productSlug, open, onOpenChange }: Product
                       <Badge variant="warning">Featured</Badge>
                     )}
                     {product.isPreOrder && (
-                      <Badge variant="inprogress">Pre-Order</Badge>
+                      <Badge variant="inprogress">Group Buy</Badge>
                     )}
                   </div>
 
@@ -243,7 +243,7 @@ export function ProductDetailsModal({ productSlug, open, onOpenChange }: Product
                         </div>
                         {product.preOrderPrice && product.isPreOrder && (
                           <div className="text-sm text-blue-600 font-medium">
-                            Pre-order Price: BDT {currencyFormatBDT(product.preOrderPrice)}
+                            Group Buy Price: BDT {currencyFormatBDT(product.preOrderPrice)}
                           </div>
                         )}
                       </div>

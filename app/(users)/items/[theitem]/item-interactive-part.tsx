@@ -495,7 +495,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     // Update localStorage
     setCartLocal({ items: updatedCart });
 
-    toast.success("Pre-order item added to cart!");
+    toast.success("Group Buy item added to cart!");
 
     // Navigate to cart
     router.push("/cart");
@@ -623,10 +623,10 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
             <button
               onClick={() => handlePreOrder()}
               type="button"
-              aria-label="pre-order button"
+              aria-label="group buy button"
               className="w-full h-fit px-6 py-2.5 border-2 border-brand-500 rounded-[4px] text-[12px] md:text-[14px] leading-5 tracking-tight font-[600] text-white bg-brand-600 disabled:bg-brand-300 disabled:hover:bg-brand-300 hover:bg-brand-700 transition-colors duration-100 ease-linear shadow-sm"
             >
-              Pre-Order Now - Save BDT{" "}
+              Group Buy Now - Save BDT{" "}
               {(singleitem.i_price - singleitem.i_preorderprice).toFixed(0)}
             </button>
           )}

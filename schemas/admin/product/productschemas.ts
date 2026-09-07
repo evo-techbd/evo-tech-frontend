@@ -227,7 +227,7 @@ export const AddProductSchema = z.object({
           const n = Number(val);
           return !Number.isNaN(n) && n >= 0;
         },
-        { message: "Pre-order price cannot be negative" },
+        { message: "Group Buy price cannot be negative" },
       )
       .optional()
       .nullable(),
@@ -452,7 +452,7 @@ export const UpdateProductSchema = z.object({
           const n = Number(val);
           return !Number.isNaN(n) && n >= 0;
         },
-        { message: "Pre-order price cannot be negative" },
+        { message: "Group Buy price cannot be negative" },
       )
       .optional()
       .nullable(),
