@@ -525,10 +525,13 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   })();
 
   // Format color variations for ColorSelector component
+  // Stock is included only for real color variations, so the selector can
+  // show an out-of-stock indicator upfront, before the user selects a color
   const formattedColors = hasColorVariations
     ? realTimeColorVariations.map((cv: any) => ({
       name: cv.colorName,
       hex: cv.colorCode,
+      stock: cv.stock,
     }))
     : singleitem.i_colors || [];
 

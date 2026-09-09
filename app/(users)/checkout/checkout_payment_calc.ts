@@ -1,11 +1,17 @@
 import { CartItem } from "@/schemas/cartSchema";
 import { calculateCartBreakdown } from "@/utils/cart-totals";
-import { getAdditionalChargeforWeight, getCODCharge } from "@/utils/essential_functions";
+import {
+  getAdditionalChargeforWeight,
+  getCODCharge,
+  DeliveryChargeSettings,
+  DEFAULT_DELIVERY_CHARGE_SETTINGS,
+} from "@/utils/essential_functions";
 
 export const calculatePayment = (
   cartItems: CartItem[],
   paymentMethod: string,
-  cityKey?: string
+  cityKey?: string,
+  deliveryChargeSettings: DeliveryChargeSettings = DEFAULT_DELIVERY_CHARGE_SETTINGS
 ) => {
   const bKashCashoutRate = 0.0149; // 1.49% charge for Bkash
   const isInsideDhaka = cityKey === "dhaka";
@@ -30,7 +36,11 @@ export const calculatePayment = (
     // Calculate weight-based shipping charge (applies to all payment methods)
     if (cityKey) {
       chargeforWeight = Math.round(
-        getAdditionalChargeforWeight(Number(totalWeight), isInsideDhaka)
+        getAdditionalChargeforWeight(
+          Number(totalWeight),
+          isInsideDhaka,
+          deliveryChargeSettings
+        )
       );
     }
 

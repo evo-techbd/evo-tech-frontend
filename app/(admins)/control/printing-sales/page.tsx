@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
     printingSaleColumns,
     PrintingSaleType,
 } from "./printing-sale-columns";
+import PrintingSaleTableRowActions from "./printing-sale-table-row-actions";
 import { ServerSidePaginationProps } from "@/utils/types_interfaces/data-table-props";
 
 export default function PrintingSalesPage() {
@@ -52,6 +53,27 @@ export default function PrintingSalesPage() {
     useEffect(() => {
         fetchSales();
     }, [fetchSales]);
+
+    const columnsWithRefetch = useMemo(
+        () =>
+            printingSaleColumns.map((col: any) => {
+                const columnId = col.id || col.accessorKey;
+
+                if (columnId === "actions") {
+                    return {
+                        ...col,
+                        cell: ({ row }: any) => (
+                            <PrintingSaleTableRowActions
+                                row={row}
+                                onDataChange={fetchSales}
+                            />
+                        ),
+                    };
+                }
+                return col;
+            }),
+        [fetchSales],
+    );
 
     const handleSearch = () => {
         setPageIndex(0);
@@ -136,7 +158,7 @@ export default function PrintingSalesPage() {
                 </div>
             ) : (
                 <DataTable<PrintingSaleType, any>
-                    columns={printingSaleColumns}
+                    columns={columnsWithRefetch}
                     data={sales}
                     enableSelectedRowsCount={false}
                     serverSidePagination={serverSidePagination}

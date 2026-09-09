@@ -5,6 +5,7 @@ import { memo, useMemo } from "react";
 type ColorOption = {
     name: string;  // Name of the color
     hex: string;    // Hex value for display
+    stock?: number; // Remaining stock for this color, when known
 }
 
 type ColorSelectorProps = {
@@ -68,26 +69,57 @@ const ColorSelector = memo(({ colors, selectedColor, onColorSelect }: ColorSelec
         return selectedColor.toLowerCase() === colorName.toLowerCase();
     };
 
+    // A color is known to be out of stock only when stock info was provided for it
+    const isOutOfStock = (coloroption: ColorOption): boolean => {
+        return typeof coloroption.stock === 'number' && coloroption.stock <= 0;
+    };
+
+    const hasOutOfStockColor = parsedColors.some(isOutOfStock);
+
     return (
-        <div className="flex flex-wrap items-start w-full h-fit gap-4">
-            {parsedColors.map((coloroption, idx) => (
-                <div 
-                    key={`color_${idx}`}
-                    className="flex flex-col items-center gap-1.5 cursor-pointer"
-                    onClick={() => handleColorClick(coloroption)}
-                >
-                    <div
-                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer border-2 border-white ring-2 transition-all duration-200 ${isColorSelected(coloroption.name) ? 'ring-brand-600 ring-offset-2 scale-110' : 'ring-stone-300 hover:ring-stone-400'}`}
-                        style={{ backgroundColor: coloroption.hex }}
-                    >
-                    </div>
-                    <span className={`text-[10px] sm:text-[11px] font-medium capitalize max-w-[60px] text-center leading-tight ${
-                        isColorSelected(coloroption.name) ? 'text-brand-700' : 'text-stone-600'
-                    }`}>
-                        {coloroption.name}
+        <div className="flex flex-col w-full h-fit gap-2">
+            <div className="flex flex-wrap items-start w-full h-fit gap-4">
+                {parsedColors.map((coloroption, idx) => {
+                    const outOfStock = isOutOfStock(coloroption);
+                    const selected = isColorSelected(coloroption.name);
+
+                    return (
+                        <div
+                            key={`color_${idx}`}
+                            className="flex flex-col items-center gap-1.5 cursor-pointer"
+                            onClick={() => handleColorClick(coloroption)}
+                        >
+                            <div
+                                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer border-2 border-white ring-2 transition-all duration-200 ${outOfStock
+                                        ? `ring-red-400 opacity-50${selected ? ' ring-offset-2' : ''}`
+                                        : selected
+                                            ? 'ring-brand-600 ring-offset-2 scale-110'
+                                            : 'ring-stone-300 hover:ring-stone-400'
+                                    }`}
+                                style={{ backgroundColor: coloroption.hex }}
+                            >
+                            </div>
+                            <span className={`text-[10px] sm:text-[11px] font-medium capitalize max-w-[60px] text-center leading-tight ${outOfStock ? 'text-red-500' : selected ? 'text-brand-700' : 'text-stone-600'
+                                }`}>
+                                {coloroption.name}
+                            </span>
+                            {outOfStock && (
+                                <span className="text-[9px] leading-tight text-red-500">
+                                    Out of stock
+                                </span>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+            {hasOutOfStockColor && (
+                <div className="flex items-center gap-1.5 w-fit h-fit">
+                    <span className="inline-block w-3 h-3 rounded-full ring-2 ring-red-400 opacity-50 bg-stone-200"></span>
+                    <span className="text-[11px] text-stone-500">
+                        Red border means that color is out of stock
                     </span>
                 </div>
-            ))}
+            )}
         </div>
     );
 });

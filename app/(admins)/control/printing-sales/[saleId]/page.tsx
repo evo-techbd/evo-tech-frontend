@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Edit } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,17 +14,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import axios from "@/utils/axios/axios";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -32,7 +21,6 @@ import { PrintingSaleType } from "../printing-sale-columns";
 
 export default function PrintingSaleDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const [sale, setSale] = useState<PrintingSaleType | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -66,16 +54,6 @@ export default function PrintingSaleDetailPage() {
             toast.error("Failed to update payment status");
         } finally {
             setUpdating(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        try {
-            await axios.delete(`/admin/printing-sales/${params.saleId}`);
-            toast.success("Sale deleted successfully");
-            router.push("/control/printing-sales");
-        } catch (error) {
-            toast.error("Failed to delete sale");
         }
     };
 
@@ -133,37 +111,6 @@ export default function PrintingSaleDetailPage() {
                     >
                         {sale.paymentStatus}
                     </Badge>
-
-                    <Link href={`/control/printing-sales/${params.saleId}/edit`}>
-                        <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                        </Button>
-                    </Link>
-
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Delete
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Delete this sale?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the
-                                    sale record and remove it from all financial calculations.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete}>
-                                    Delete
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
                 </div>
             </div>
 

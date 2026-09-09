@@ -122,6 +122,11 @@ const adminSecondarySidebarMenus = [
                 url: "/control/setup-config/homepage-config",
                 permissions: ["MANAGE_SITE_SETTINGS"],
             },
+            {
+                title: "Delivery Charge",
+                url: "/control/setup-config/delivery-charge",
+                permissions: ["MANAGE_SITE_SETTINGS"],
+            },
             // {
             //     title: "Feature Activation",
             //     url: "/control/setup-config/feature-activation",

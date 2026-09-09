@@ -177,6 +177,11 @@ const staffSecondarySidebarMenus = [
                 permissions: ["MANAGE_SITE_SETTINGS"],
             },
             {
+                title: "Delivery Charge",
+                url: "/control/setup-config/delivery-charge",
+                permissions: ["MANAGE_SITE_SETTINGS"],
+            },
+            {
                 title: "Terms & Conditions",
                 url: "/control/terms",
                 permissions: ["MANAGE_SITE_SETTINGS"],

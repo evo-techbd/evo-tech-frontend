@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import PrintingSaleTableRowActions from "./printing-sale-table-row-actions";
 
 export interface PrintingSaleType {
     _id: string;
@@ -133,6 +134,12 @@ export const printingSaleColumns: ColumnDef<PrintingSaleType>[] = [
                     {date ? format(new Date(date), "dd MMM yyyy") : "N/A"}
                 </div>
             );
+        },
+    },
+    {
+        id: "actions",
+        cell: ({ row }) => {
+            return <PrintingSaleTableRowActions row={row} />;
         },
     },
 ];

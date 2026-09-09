@@ -34,6 +34,10 @@ import createAxiosClient from "@/utils/axios/axiosClient";
 import axiosErrorLogger from "@/components/error/axios_error";
 import { useRouter } from "next/navigation";
 import { calculatePayment } from "./checkout_payment_calc";
+import {
+  DeliveryChargeSettings,
+  DEFAULT_DELIVERY_CHARGE_SETTINGS,
+} from "@/utils/essential_functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { validateCoupon } from "@/actions/user/coupons";
 import { applyCoupon, removeCoupon } from "@/store/slices/discountSlice";
@@ -56,6 +60,8 @@ const CheckoutParts = () => {
     [],
   );
   const [isLoadingPickupPoints, setIsLoadingPickupPoints] = useState(false);
+  const [deliveryChargeSettings, setDeliveryChargeSettings] =
+    useState<DeliveryChargeSettings>(DEFAULT_DELIVERY_CHARGE_SETTINGS);
   const cartItems = useSelector(
     (state: RootState) => state.shoppingcart.cartdata,
   );
@@ -143,6 +149,33 @@ const CheckoutParts = () => {
     fetchPickupPoints();
   }, []);
 
+  // Fetch admin-configured delivery charge settings
+  useEffect(() => {
+    const fetchDeliveryChargeSettings = async () => {
+      try {
+        const response = await axios.get("/settings/delivery-charge");
+        const data = response.data?.data;
+        if (
+          data &&
+          typeof data.insideDhakaCharge === "number" &&
+          typeof data.outsideDhakaCharge === "number" &&
+          typeof data.additionalChargePerKg === "number"
+        ) {
+          setDeliveryChargeSettings({
+            insideDhakaCharge: data.insideDhakaCharge,
+            outsideDhakaCharge: data.outsideDhakaCharge,
+            additionalChargePerKg: data.additionalChargePerKg,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch delivery charge settings:", error);
+        axiosErrorLogger({ error });
+      }
+    };
+
+    fetchDeliveryChargeSettings();
+  }, []);
+
   const {
     cartSubTotal,
     chargeforWeight,
@@ -155,8 +188,13 @@ const CheckoutParts = () => {
     preOrderItemsCount,
     regularSubtotal,
   } = useMemo(() => {
-    return calculatePayment(cartItems ?? [], paymentMethod, cityValue);
-  }, [cartItems, paymentMethod, cityValue]);
+    return calculatePayment(
+      cartItems ?? [],
+      paymentMethod,
+      cityValue,
+      deliveryChargeSettings
+    );
+  }, [cartItems, paymentMethod, cityValue, deliveryChargeSettings]);
 
   const totalPayableAmount = useMemo(() => {
     return (

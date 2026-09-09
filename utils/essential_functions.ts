@@ -30,10 +30,26 @@ const getNameInitials = (name: string) => {
 }
 
 
-const getAdditionalChargeforWeight = (weight: number, isInsideDhaka: boolean = true) => { // weight in grams
-    // Base charges: Inside Dhaka 70tk, Outside Dhaka 120tk for below 1kg
-    const baseCharge = isInsideDhaka ? 70 : 120;
-    const additionalChargeStep = 20; // +20tk for every additional kg
+export interface DeliveryChargeSettings {
+    insideDhakaCharge: number;
+    outsideDhakaCharge: number;
+    additionalChargePerKg: number;
+}
+
+// Fallback used only if the admin-configured settings haven't loaded yet
+export const DEFAULT_DELIVERY_CHARGE_SETTINGS: DeliveryChargeSettings = {
+    insideDhakaCharge: 70,
+    outsideDhakaCharge: 120,
+    additionalChargePerKg: 20,
+};
+
+const getAdditionalChargeforWeight = (
+    weight: number, // weight in grams
+    isInsideDhaka: boolean = true,
+    settings: DeliveryChargeSettings = DEFAULT_DELIVERY_CHARGE_SETTINGS
+) => {
+    const baseCharge = isInsideDhaka ? settings.insideDhakaCharge : settings.outsideDhakaCharge;
+    const additionalChargeStep = settings.additionalChargePerKg; // charge for every additional kg
   
     if (weight <= 1000) return baseCharge; // for weight below or equal to 1kg
   
