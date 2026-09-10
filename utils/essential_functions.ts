@@ -34,6 +34,8 @@ export interface DeliveryChargeSettings {
     insideDhakaCharge: number;
     outsideDhakaCharge: number;
     additionalChargePerKg: number;
+    expressInsideDhakaCharge: number;
+    expressOutsideDhakaCharge: number;
 }
 
 // Fallback used only if the admin-configured settings haven't loaded yet
@@ -41,6 +43,8 @@ export const DEFAULT_DELIVERY_CHARGE_SETTINGS: DeliveryChargeSettings = {
     insideDhakaCharge: 70,
     outsideDhakaCharge: 120,
     additionalChargePerKg: 20,
+    expressInsideDhakaCharge: 150,
+    expressOutsideDhakaCharge: 250,
 };
 
 const getAdditionalChargeforWeight = (

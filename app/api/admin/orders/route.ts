@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
     const includeItems = searchParams.get("includeItems");
+    const year = searchParams.get("year");
+    const month = searchParams.get("month");
 
     // Build query string for backend - convert to camelCase
     const backendParams = new URLSearchParams();
@@ -48,6 +50,14 @@ export async function GET(request: NextRequest) {
 
     if (limit) {
       backendParams.set("limit", limit);
+    }
+
+    if (year) {
+      backendParams.set("year", year);
+    }
+
+    if (month) {
+      backendParams.set("month", month);
     }
 
     const backendQueryString = backendParams.toString();

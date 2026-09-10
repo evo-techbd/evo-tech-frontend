@@ -75,6 +75,7 @@ export const calculatePayment = (
   return {
     ...breakdown,
     totalWeight,
+    isInsideDhaka,
     chargeforWeight,
     codCharge,
     bKashCharge,

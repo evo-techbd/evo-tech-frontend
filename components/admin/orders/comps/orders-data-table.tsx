@@ -17,8 +17,16 @@ const LoadingSpinner: React.FC = () => (
     </div>
 );
 
-const OrdersDataTable = () => {
-    const { orders, isLoading, error, refetch, serverSidePagination } = useOrdersData();
+interface OrdersDataTableProps {
+    archiveMode?: boolean;
+    year?: number;
+    month?: number;
+}
+
+const OrdersDataTable = ({ archiveMode, year, month }: OrdersDataTableProps = {}) => {
+    const { orders, isLoading, error, refetch, serverSidePagination } = useOrdersData(
+        archiveMode ? { year, month } : undefined
+    );
     const { refreshPendingCount } = usePendingOrders();
 
     // Wrap refetch to also update pending count
@@ -36,9 +44,14 @@ const OrdersDataTable = () => {
                 return {
                     ...col,
                     cell: ({ row }: any) => (
-                        <OrderTableRowActions row={row} onDataChange={handleRefetch} />
+                        <OrderTableRowActions row={row} onDataChange={handleRefetch} archiveMode={archiveMode} />
                     ),
                 };
+            }
+            // Archive view is read-only: leave orderStatus/paymentStatus as the
+            // plain, non-editable badges already defined in ordersColumns.
+            if (archiveMode) {
+                return col;
             }
             if (columnId === 'orderStatus') {
                 return {
@@ -75,7 +88,7 @@ const OrdersDataTable = () => {
                 };
             }
             return col;
-        }), [handleRefetch]
+        }), [handleRefetch, archiveMode]
     );
 
     // customize the action button background of the toast

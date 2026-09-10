@@ -159,12 +159,16 @@ const CheckoutParts = () => {
           data &&
           typeof data.insideDhakaCharge === "number" &&
           typeof data.outsideDhakaCharge === "number" &&
-          typeof data.additionalChargePerKg === "number"
+          typeof data.additionalChargePerKg === "number" &&
+          typeof data.expressInsideDhakaCharge === "number" &&
+          typeof data.expressOutsideDhakaCharge === "number"
         ) {
           setDeliveryChargeSettings({
             insideDhakaCharge: data.insideDhakaCharge,
             outsideDhakaCharge: data.outsideDhakaCharge,
             additionalChargePerKg: data.additionalChargePerKg,
+            expressInsideDhakaCharge: data.expressInsideDhakaCharge,
+            expressOutsideDhakaCharge: data.expressOutsideDhakaCharge,
           });
         }
       } catch (error) {
@@ -178,6 +182,8 @@ const CheckoutParts = () => {
 
   const {
     cartSubTotal,
+    totalWeight,
+    isInsideDhaka,
     chargeforWeight,
     codCharge,
     bKashCharge,
@@ -195,6 +201,55 @@ const CheckoutParts = () => {
       deliveryChargeSettings
     );
   }, [cartItems, paymentMethod, cityValue, deliveryChargeSettings]);
+
+  // Breakdown of the delivery charge, shown to the customer so it's clear
+  // whether the Inside/Outside Dhaka rate applied and how the extra-weight
+  // tiers were counted (regular delivery), or that a flat fee applies
+  // (express delivery).
+  const shippingChargeInfo = useMemo(() => {
+    if (!cityValue) return null;
+
+    if (shippingType === "regular_delivery") {
+      const baseCharge = isInsideDhaka
+        ? deliveryChargeSettings.insideDhakaCharge
+        : deliveryChargeSettings.outsideDhakaCharge;
+      const additionalKg =
+        totalWeight > 1000 ? Math.ceil((totalWeight - 1000) / 1000) : 0;
+      const additionalWeightCharge =
+        additionalKg * deliveryChargeSettings.additionalChargePerKg;
+
+      return {
+        type: "regular_delivery" as const,
+        isInsideDhaka,
+        baseCharge,
+        additionalKg,
+        additionalWeightCharge,
+        perKgRate: deliveryChargeSettings.additionalChargePerKg,
+        total: chargeforWeight,
+      };
+    }
+
+    if (shippingType === "express_delivery") {
+      const total = isInsideDhaka
+        ? deliveryChargeSettings.expressInsideDhakaCharge
+        : deliveryChargeSettings.expressOutsideDhakaCharge;
+
+      return {
+        type: "express_delivery" as const,
+        isInsideDhaka,
+        total,
+      };
+    }
+
+    return null;
+  }, [
+    shippingType,
+    cityValue,
+    isInsideDhaka,
+    totalWeight,
+    chargeforWeight,
+    deliveryChargeSettings,
+  ]);
 
   const totalPayableAmount = useMemo(() => {
     return (
@@ -228,20 +283,18 @@ const CheckoutParts = () => {
 
   // delivery charge calculation
   useEffect(() => {
-    const isPickupOrExpress =
-      shippingType === "pickup_point" || shippingType === "express_delivery";
-
-    // Delivery charge based on shipping type: regular delivery uses weight-based charge, pickup/express = 0
+    // Delivery charge based on shipping type: regular delivery uses the
+    // weight-based charge, express delivery uses the flat fee, pickup = 0
     const delCharge = !cityValue
       ? null
-      : isPickupOrExpress
+      : shippingType === "pickup_point"
         ? 0
-        : shippingType === "regular_delivery"
-          ? chargeforWeight // Weight-based shipping charge for all payment methods
+        : shippingChargeInfo
+          ? shippingChargeInfo.total
           : null;
 
     setDeliveryCharge(delCharge);
-  }, [shippingType, chargeforWeight, cityValue]);
+  }, [shippingType, cityValue, shippingChargeInfo]);
 
   useEffect(() => {
     // Reset to default when shipping type changes
@@ -1017,6 +1070,62 @@ const CheckoutParts = () => {
                     "Usually takes 1-2 days inside Dhaka and 2-5 days outside Dhaka."
                   )}
                 </p>
+
+                {shippingChargeInfo?.type === "regular_delivery" && (
+                  <div className="mt-2 mb-2 p-2.5 rounded border border-stone-200 bg-stone-50">
+                    <p className="text-[11px] sm:text-[12px] font-[600] text-stone-800 mb-1">
+                      {`Delivery Zone: ${
+                        shippingChargeInfo.isInsideDhaka
+                          ? "Inside Dhaka"
+                          : "Outside Dhaka"
+                      }`}
+                    </p>
+                    <div className="flex flex-col gap-0.5 text-[10px] sm:text-[11px] text-stone-600">
+                      <div className="flex items-center justify-between">
+                        <span>{`Base charge (up to 1kg)`}</span>
+                        <span className="font-[600] text-stone-800">
+                          {currencyFormatBDT(shippingChargeInfo.baseCharge)}{" "}
+                          BDT
+                        </span>
+                      </div>
+                      {shippingChargeInfo.additionalKg > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span>{`Extra weight (${shippingChargeInfo.additionalKg}kg × ${currencyFormatBDT(shippingChargeInfo.perKgRate)} BDT)`}</span>
+                          <span className="font-[600] text-stone-800">
+                            {currencyFormatBDT(
+                              shippingChargeInfo.additionalWeightCharge
+                            )}{" "}
+                            BDT
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-1 mt-0.5 border-t border-stone-200">
+                        <span className="font-[600] text-stone-700">{`Shipping charge`}</span>
+                        <span className="font-[700] text-stone-900">
+                          {currencyFormatBDT(shippingChargeInfo.total)} BDT
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {shippingChargeInfo?.type === "express_delivery" && (
+                  <div className="mt-2 mb-2 p-2.5 rounded border border-stone-200 bg-stone-50">
+                    <p className="text-[11px] sm:text-[12px] font-[600] text-stone-800 mb-1">
+                      {`Delivery Zone: ${
+                        shippingChargeInfo.isInsideDhaka
+                          ? "Inside Dhaka"
+                          : "Outside Dhaka"
+                      }`}
+                    </p>
+                    <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-stone-600">
+                      <span className="font-[600] text-stone-700">{`Express delivery charge (flat rate)`}</span>
+                      <span className="font-[700] text-stone-900">
+                        {currencyFormatBDT(shippingChargeInfo.total)} BDT
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
@@ -1538,7 +1647,19 @@ const CheckoutParts = () => {
             )}
             {deliveryCharge !== null && (
               <div className="flex items-center justify-between">
-                <span>{`Shipping estimate:`}</span>
+                <span>
+                  {shippingChargeInfo
+                    ? `Shipping estimate (${
+                        shippingChargeInfo.type === "express_delivery"
+                          ? "Express, "
+                          : ""
+                      }${
+                        shippingChargeInfo.isInsideDhaka
+                          ? "Inside Dhaka"
+                          : "Outside Dhaka"
+                      }):`
+                    : `Shipping estimate:`}
+                </span>
                 <span className="font-[600] text-stone-800">
                   {currencyFormatBDT(deliveryCharge || 0)} BDT
                 </span>

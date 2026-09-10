@@ -5,7 +5,6 @@ import type { Row } from "@tanstack/react-table";
 import { OrderWithItemsType } from "@/schemas/admin/sales/orderSchema";
 import { Button } from "@/components/ui/button";
 import { Eye, Printer, Loader2, Tag } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from '@/store/store';
 import { removeAnOrder } from "@/store/slices/orderSlice";
@@ -16,19 +15,46 @@ import { updateOrderStatus } from "@/actions/admin/update-order-status";
 import { usePendingOrders } from "@/contexts/PendingOrdersContext";
 import { generateInvoicePDF } from "./generate-invoice-pdf";
 import { generateShippingLabel } from "./generate-shipping-label";
+import { OrderDetailsModal } from "./order-details-modal";
+
+// The orders table only fetches lightweight rows (no order items, and
+// potentially a stale cached amountPaid/amountDue) — refetch the full order
+// fresh right before printing so invoices/labels always reflect real data.
+const fetchOrderWithItems = async (orderId: string): Promise<OrderWithItemsType> => {
+    const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch order details");
+    }
+
+    const payload = await response.json();
+    const order = payload?.data?.order;
+    const items = payload?.data?.items;
+
+    if (!order) {
+        throw new Error("Order not found");
+    }
+
+    return { ...order, orderItems: items || [] };
+};
 
 interface RowActionProps {
     row: Row<OrderWithItemsType>;
     onDataChange?: () => Promise<void>;
+    archiveMode?: boolean;
 }
 
-const OrderTableRowActions = ({ row, onDataChange }: RowActionProps) => {
+const OrderTableRowActions = ({ row, onDataChange, archiveMode }: RowActionProps) => {
 
     const [isOpen, setIsOpen] = React.useState(false);
+    const [isViewOpen, setIsViewOpen] = React.useState(false);
     const [isDeletePending, startDeleteTransition] = React.useTransition();
     const [isPrintingInvoice, setIsPrintingInvoice] = React.useState(false);
     const [isPrintingLabel, setIsPrintingLabel] = React.useState(false);
-    const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
 
     const handleOrdersUpdateAfterDeletion = () => {
@@ -97,7 +123,8 @@ const OrderTableRowActions = ({ row, onDataChange }: RowActionProps) => {
 
         setIsPrintingInvoice(true);
         try {
-            await generateInvoicePDF(order);
+            const fullOrder = await fetchOrderWithItems(order._id || order.orderNumber);
+            await generateInvoicePDF(fullOrder);
             toast.success('Invoice downloaded successfully');
         } catch (error) {
             toast.error('Failed to generate invoice');
@@ -112,7 +139,8 @@ const OrderTableRowActions = ({ row, onDataChange }: RowActionProps) => {
 
         setIsPrintingLabel(true);
         try {
-            await generateShippingLabel(order);
+            const fullOrder = await fetchOrderWithItems(order._id || order.orderNumber);
+            await generateShippingLabel(fullOrder);
             toast.success('Shipping label downloaded successfully');
         } catch (error) {
             toast.error('Failed to generate shipping label');
@@ -128,7 +156,7 @@ const OrderTableRowActions = ({ row, onDataChange }: RowActionProps) => {
                 size="sm"
                 className="h-8 w-8 p-0 rounded-full bg-blue-100 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                 aria-label={`View Order details`}
-                onClick={() => router.push(`/control/orders/${row.original._id || row.original.orderNumber}`)}
+                onClick={() => setIsViewOpen(true)}
             >
                 <Eye className="h-4 w-4" />
             </Button>
@@ -163,6 +191,12 @@ const OrderTableRowActions = ({ row, onDataChange }: RowActionProps) => {
                 )}
             </Button>
 
+            <OrderDetailsModal
+                orderId={row.original._id || row.original.orderNumber}
+                open={isViewOpen}
+                onOpenChange={setIsViewOpen}
+            />
+
             <DeleteDialog<OrderWithItemsType>
                 rowitem={row.original}
                 open={isOpen}
@@ -171,8 +205,8 @@ const OrderTableRowActions = ({ row, onDataChange }: RowActionProps) => {
                 isDeletePending={isDeletePending}
                 entityName="order"
             />
-            {/* Cancel button - visible only if order not already cancelled */}
-            {row.original.orderStatus !== 'cancelled' && (
+            {/* Cancel button - visible only if order not already cancelled and not in the read-only archive */}
+            {!archiveMode && row.original.orderStatus !== 'cancelled' && (
                 <Button
                     variant="ghost"
                     size="sm"

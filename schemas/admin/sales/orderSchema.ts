@@ -13,6 +13,7 @@ export const pickupPointSchema = z.object({
 export const orderSchema = z.object({
   _id: z.string().optional(),
   orderNumber: z.string(),
+  invoiceSerial: z.string().optional(),
   user: z.string(), // UUID
   firstname: z.string(),
   lastname: z.string(),

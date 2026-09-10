@@ -15,9 +15,10 @@ import { generatePrintingSalePDF } from "@/components/admin/printing-sales/gener
 interface RowActionProps {
     row: Row<PrintingSaleType>;
     onDataChange?: () => Promise<void>;
+    onView?: (sale: PrintingSaleType) => void;
 }
 
-const PrintingSaleTableRowActions = ({ row, onDataChange }: RowActionProps) => {
+const PrintingSaleTableRowActions = ({ row, onDataChange, onView }: RowActionProps) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [isDeletePending, startDeleteTransition] = React.useTransition();
     const [isPrinting, setIsPrinting] = React.useState(false);
@@ -61,7 +62,7 @@ const PrintingSaleTableRowActions = ({ row, onDataChange }: RowActionProps) => {
                 size="sm"
                 className="h-8 w-8 p-0 rounded-full bg-blue-100 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                 aria-label="View sale details"
-                onClick={() => router.push(`/control/printing-sales/${sale._id}`)}
+                onClick={() => onView?.(sale)}
             >
                 <Eye className="h-4 w-4" />
             </Button>

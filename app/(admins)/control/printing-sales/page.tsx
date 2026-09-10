@@ -20,6 +20,8 @@ import {
 } from "./printing-sale-columns";
 import PrintingSaleTableRowActions from "./printing-sale-table-row-actions";
 import { ServerSidePaginationProps } from "@/utils/types_interfaces/data-table-props";
+import { PrintingSaleViewModal } from "@/components/admin/printing-sales/printing-sale-view-modal";
+import { PrintingSalePaymentStatusDropdown } from "@/components/admin/printing-sales/printing-sale-payment-status-dropdown";
 
 export default function PrintingSalesPage() {
     const [sales, setSales] = useState<PrintingSaleType[]>([]);
@@ -29,6 +31,8 @@ export default function PrintingSalesPage() {
     const [pageIndex, setPageIndex] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
+    const [selectedSale, setSelectedSale] = useState<PrintingSaleType | null>(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
 
     const fetchSales = useCallback(async () => {
         try {
@@ -54,6 +58,11 @@ export default function PrintingSalesPage() {
         fetchSales();
     }, [fetchSales]);
 
+    const handleViewDetails = useCallback((sale: PrintingSaleType) => {
+        setSelectedSale(sale);
+        setIsViewOpen(true);
+    }, []);
+
     const columnsWithRefetch = useMemo(
         () =>
             printingSaleColumns.map((col: any) => {
@@ -66,13 +75,26 @@ export default function PrintingSalesPage() {
                             <PrintingSaleTableRowActions
                                 row={row}
                                 onDataChange={fetchSales}
+                                onView={handleViewDetails}
+                            />
+                        ),
+                    };
+                }
+                if (columnId === "paymentStatus") {
+                    return {
+                        ...col,
+                        cell: ({ row }: any) => (
+                            <PrintingSalePaymentStatusDropdown
+                                saleId={row.original._id}
+                                currentStatus={row.getValue("paymentStatus") as string || "pending"}
+                                onDataChange={fetchSales}
                             />
                         ),
                     };
                 }
                 return col;
             }),
-        [fetchSales],
+        [fetchSales, handleViewDetails],
     );
 
     const handleSearch = () => {
@@ -164,6 +186,15 @@ export default function PrintingSalesPage() {
                     serverSidePagination={serverSidePagination}
                 />
             )}
+
+            <PrintingSaleViewModal
+                sale={selectedSale}
+                isOpen={isViewOpen}
+                onClose={() => {
+                    setIsViewOpen(false);
+                    setSelectedSale(null);
+                }}
+            />
         </div>
     );
 }

@@ -42,6 +42,8 @@ export const DeliveryChargeForm = ({ settings }: DeliveryChargeFormProps) => {
       insideDhakaCharge: settings.insideDhakaCharge,
       outsideDhakaCharge: settings.outsideDhakaCharge,
       additionalChargePerKg: settings.additionalChargePerKg,
+      expressInsideDhakaCharge: settings.expressInsideDhakaCharge,
+      expressOutsideDhakaCharge: settings.expressOutsideDhakaCharge,
     },
   });
 
@@ -74,18 +76,23 @@ export const DeliveryChargeForm = ({ settings }: DeliveryChargeFormProps) => {
   };
 
   return (
-    <Card className="max-w-xl">
-      <CardHeader>
-        <CardTitle className="text-base">Weight-Based Delivery Charge</CardTitle>
-        <CardDescription>
-          This charge is calculated automatically at checkout based on the
-          customer&apos;s delivery city and total order weight, and is applied
-          to regular (non pickup-point, non express) deliveries.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-6 max-w-xl"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Weight-Based Delivery Charge
+            </CardTitle>
+            <CardDescription>
+              This charge is calculated automatically at checkout based on the
+              customer&apos;s delivery city and total order weight, and is
+              applied to Regular Delivery orders.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <FormField
               control={form.control}
               name="insideDhakaCharge"
@@ -161,17 +168,73 @@ export const DeliveryChargeForm = ({ settings }: DeliveryChargeFormProps) => {
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
 
-            <Button
-              type="submit"
-              disabled={form.formState.isSubmitting}
-              className="text-xs"
-            >
-              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Express Delivery Charge</CardTitle>
+            <CardDescription>
+              A flat fee applied automatically when a customer selects Express
+              Delivery at checkout, based on the delivery zone (regardless of
+              order weight).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="expressInsideDhakaCharge"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium">
+                    Express Charge — Inside Dhaka (BDT)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      {...field}
+                      className="text-xs"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expressOutsideDhakaCharge"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium">
+                    Express Charge — Outside Dhaka (BDT)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      {...field}
+                      className="text-xs"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Button
+          type="submit"
+          disabled={form.formState.isSubmitting}
+          className="text-xs w-fit"
+        >
+          {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+        </Button>
+      </form>
+    </Form>
   );
 };

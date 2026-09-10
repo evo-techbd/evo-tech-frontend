@@ -22,7 +22,10 @@ const ordersResponseCache = new Map<
   { timestamp: number; response: OrdersApiResponse }
 >();
 
-const getQueryStringFromSearchParams = (searchParams: URLSearchParams) => {
+const getQueryStringFromSearchParams = (
+  searchParams: URLSearchParams,
+  archiveOptions?: { year?: number; month?: number },
+) => {
   const queryParams = new URLSearchParams();
 
   const search = searchParams.get("search");
@@ -38,6 +41,11 @@ const getQueryStringFromSearchParams = (searchParams: URLSearchParams) => {
   if (category) queryParams.set("category", category);
   if (page) queryParams.set("page", page);
   if (limit) queryParams.set("limit", limit);
+
+  // Archive view: year/month live in the route's path segments, not in
+  // useSearchParams(), so they're passed in explicitly here.
+  if (archiveOptions?.year) queryParams.set("year", String(archiveOptions.year));
+  if (archiveOptions?.month) queryParams.set("month", String(archiveOptions.month));
 
   return queryParams.toString();
 };
@@ -128,8 +136,13 @@ interface UseOrdersDataReturn {
   serverSidePagination: ServerSidePaginationProps | null;
 }
 
-export function useOrdersData(): UseOrdersDataReturn {
+export function useOrdersData(archiveOptions?: {
+  year?: number;
+  month?: number;
+}): UseOrdersDataReturn {
   const currentUser = useMemo(() => getCurrentUser(), []);
+  const archiveYear = archiveOptions?.year;
+  const archiveMonth = archiveOptions?.month;
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paginationData, setPaginationData] =
@@ -153,7 +166,10 @@ export function useOrdersData(): UseOrdersDataReturn {
       setError(null);
 
       const stableSearchParams = new URLSearchParams(searchParamsString);
-      const queryString = getQueryStringFromSearchParams(stableSearchParams);
+      const queryString = getQueryStringFromSearchParams(stableSearchParams, {
+        year: archiveYear,
+        month: archiveMonth,
+      });
       const page = stableSearchParams.get("page");
 
       const requestedPage = page ? parseInt(page) : 1;
@@ -207,6 +223,8 @@ export function useOrdersData(): UseOrdersDataReturn {
     pathname,
     currentUser,
     orders.length,
+    archiveYear,
+    archiveMonth,
   ]);
 
   // Handle page change

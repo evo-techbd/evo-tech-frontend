@@ -7,6 +7,8 @@ const DEFAULT_SETTINGS: DeliveryChargeSettingsType = {
   insideDhakaCharge: 70,
   outsideDhakaCharge: 120,
   additionalChargePerKg: 20,
+  expressInsideDhakaCharge: 150,
+  expressOutsideDhakaCharge: 250,
 };
 
 const getDeliveryChargeSettings =

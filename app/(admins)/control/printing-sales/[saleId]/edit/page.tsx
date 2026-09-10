@@ -169,7 +169,7 @@ export default function EditPrintingSalePage() {
         <div className="w-full h-fit flex flex-col px-5 md:px-7 py-8 gap-6 font-inter">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Link href={`/control/printing-sales/${params.saleId}`}>
+                <Link href="/control/printing-sales">
                     <Button variant="outline" size="icon">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>

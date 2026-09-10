@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Download, Search } from "lucide-react";
+import Link from "next/link";
+import { Archive, ArrowLeft, Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,11 +39,19 @@ const orderFilterSchema = z.object({
 
 type OrderFilterValues = z.infer<typeof orderFilterSchema>;
 
-const OrdersHeaderClient = () => {
+interface OrdersHeaderClientProps {
+  basePath?: string;
+  archiveContext?: { year: number; month: number };
+}
+
+const OrdersHeaderClient = ({
+  basePath = "/control/orders",
+  archiveContext,
+}: OrdersHeaderClientProps = {}) => {
   const searchParams = useSearchParams();
   const { updateSearchParams, resetSearchParams, getParam } =
     useSearchParamsState({
-      basePath: "/control/orders",
+      basePath,
     });
 
   const { getCategoriesForSelect } = useTaxonomy();
@@ -56,6 +65,14 @@ const OrdersHeaderClient = () => {
   const fetchOrdersForExport = async (): Promise<OrderWithItemsType[]> => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("includeItems", "true");
+
+    // On the archive month page, year/month live in the route path, not in
+    // useSearchParams() — inject them explicitly so export stays scoped to
+    // this month instead of exporting the unscoped active-orders list.
+    if (archiveContext) {
+      params.set("year", String(archiveContext.year));
+      params.set("month", String(archiveContext.month));
+    }
 
     const response = await fetch(`/api/admin/orders?${params.toString()}`, {
       method: "GET",
@@ -169,7 +186,9 @@ const OrdersHeaderClient = () => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full flex flex-col xl:flex-row gap-4 items-end xl:items-center"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 ${archiveContext ? "lg:grid-cols-3" : "lg:grid-cols-4"} gap-4 w-full`}
+          >
             <FormField
               control={form.control}
               name="search"
@@ -189,6 +208,8 @@ const OrdersHeaderClient = () => {
               )}
             />
 
+            {/* Order status is always "delivered" in the archive, so the filter is meaningless there */}
+            {!archiveContext && (
             <FormField
               control={form.control}
               name="order_status"
@@ -222,7 +243,6 @@ const OrdersHeaderClient = () => {
                         <SelectItem value="shipped">
                           Assigned to Rider
                         </SelectItem>
-                        <SelectItem value="delivered">Delivered</SelectItem>
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
@@ -230,6 +250,7 @@ const OrdersHeaderClient = () => {
                 </FormItem>
               )}
             />
+            )}
 
             <FormField
               control={form.control}
@@ -354,6 +375,32 @@ const OrdersHeaderClient = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {archiveContext ? (
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="whitespace-nowrap"
+        >
+          <Link href="/control/orders/archive">
+            <ArrowLeft className="mr-0.5 size-4" />
+            Back to Archive
+          </Link>
+        </Button>
+      ) : (
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="whitespace-nowrap"
+        >
+          <Link href="/control/orders/archive">
+            <Archive className="mr-0.5 size-4" />
+            Order Archive
+          </Link>
+        </Button>
+      )}
     </div>
   );
 };
