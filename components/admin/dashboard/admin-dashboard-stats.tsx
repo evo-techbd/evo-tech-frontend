@@ -31,11 +31,28 @@ interface DashboardStats {
   totalOrders: number;
   totalCustomers: number;
   totalProducts: number;
-  revenueGrowth: number;
-  profitGrowth: number;
-  ordersGrowth: number;
-  customersGrowth: number;
-  productsGrowth: number;
+  // null when there is nothing to compare against
+  revenueGrowth: number | null;
+  profitGrowth: number | null;
+  ordersGrowth: number | null;
+  customersGrowth: number | null;
+  productsGrowth: number | null;
+  cashCollected?: number;
+  receivables?: {
+    amount: number;
+    ordersWithDue: number;
+    partialOrders: number;
+  };
+  profitWarning?: {
+    message: string;
+    itemsAffected: number;
+    products?: {
+      productId: string | null;
+      slug: string | null;
+      name: string;
+      unitsSold: number;
+    }[];
+  } | null;
   orderBreakdown?: {
     pending: number;
     confirmed: number;
@@ -120,13 +137,20 @@ export function AdminDashboardStats() {
       case "this-month":
         return "vs last month";
       case "all-time":
-        return "vs last year";
+        return "";
       default:
         return "vs last period";
     }
   };
 
-  const GrowthBadge = ({ value }: { value: number }) => {
+  const GrowthBadge = ({ value }: { value: number | null }) => {
+    if (value === null || value === undefined) {
+      return (
+        <span className="inline-flex items-center text-xs font-semibold px-1.5 py-0.5 rounded-md text-stone-500 bg-stone-100">
+          N/A
+        </span>
+      );
+    }
     const isPositive = value >= 0;
     return (
       <span
@@ -179,7 +203,7 @@ export function AdminDashboardStats() {
       hasTooltip: true,
     },
     {
-      title: "Customers",
+      title: dateRange === "all-time" ? "Customers" : "New Customers",
       value: stats.totalCustomers,
       icon: Users,
       growth: stats.customersGrowth,
@@ -245,10 +269,18 @@ export function AdminDashboardStats() {
                       )}
                     </p>
                     <div className="flex items-center gap-2 pt-1">
-                      <GrowthBadge value={card.growth} />
-                      <span className="text-xs text-stone-400">
-                        {getComparisonText()}
-                      </span>
+                      {dateRange === "all-time" ? (
+                        <span className="text-xs text-stone-400">
+                          All-time total
+                        </span>
+                      ) : (
+                        <>
+                          <GrowthBadge value={card.growth} />
+                          <span className="text-xs text-stone-400">
+                            {getComparisonText()}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div
@@ -263,8 +295,71 @@ export function AdminDashboardStats() {
         })}
       </div>
 
-      {/* View Profit Details Button */}
-      <div className="flex justify-end">
+      {!loading && stats.profitWarning && (
+        <details className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+          <summary className="cursor-pointer">
+            {stats.profitWarning.message} Click to see the products and set
+            their buying prices.
+          </summary>
+          <ul className="mt-2 space-y-1">
+            {(stats.profitWarning.products || []).map((product) => (
+              <li
+                key={product.productId || product.name}
+                className="flex justify-between gap-4"
+              >
+                {product.slug ? (
+                  <Link
+                    href={`/control/products/update/${product.slug}`}
+                    className="underline hover:text-amber-950"
+                  >
+                    {product.name}
+                  </Link>
+                ) : (
+                  <span>{product.name} (deleted product)</span>
+                )}
+                <span className="shrink-0">{product.unitsSold} sold</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {/* Cash position: what came in vs what customers still owe */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-stone-200 bg-white p-4">
+          <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">
+            Cash Collected
+          </p>
+          <p className="text-xl font-bold text-stone-900 mt-1">
+            {loading ? "…" : formatCurrency(stats.cashCollected || 0)}
+          </p>
+          <p className="text-[11px] text-stone-400 mt-0.5">
+            Payments received, incl. delivery charges and partial payments
+          </p>
+        </div>
+        <div className="rounded-xl border border-stone-200 bg-white p-4">
+          <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">
+            Amount Due from Customers
+          </p>
+          <p className="text-xl font-bold text-red-600 mt-1">
+            {loading ? "…" : formatCurrency(stats.receivables?.amount || 0)}
+          </p>
+          <p className="text-[11px] text-stone-400 mt-0.5">
+            {stats.receivables?.ordersWithDue || 0} orders with a balance
+            {stats.receivables?.partialOrders
+              ? ` (${stats.receivables.partialOrders} partially paid)`
+              : ""}
+          </p>
+        </div>
+      </div>
+
+      {/* Revenue definition + View Profit Details Button */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-stone-500">
+          Revenue = full value of confirmed-or-later orders after discount
+          (excl. delivery &amp; payment fees), including amounts not yet
+          collected, + paid 3D printing.
+        </p>
         <Link href="/control/dashboard/profit-breakdown">
           <button className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50">
             <TrendingUp className="h-3.5 w-3.5" />
@@ -303,10 +398,18 @@ export function AdminDashboardStats() {
                       )}
                     </p>
                     <div className="flex items-center gap-2">
-                      <GrowthBadge value={card.growth} />
-                      <span className="text-xs text-stone-400">
-                        {getComparisonText()}
-                      </span>
+                      {dateRange === "all-time" ? (
+                        <span className="text-xs text-stone-400">
+                          All-time total
+                        </span>
+                      ) : (
+                        <>
+                          <GrowthBadge value={card.growth} />
+                          <span className="text-xs text-stone-400">
+                            {getComparisonText()}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div
@@ -332,8 +435,13 @@ export function AdminDashboardStats() {
                     className="bg-white border border-stone-200 shadow-xl rounded-xl p-4 text-stone-900"
                   >
                     <div className="space-y-2 min-w-[220px]">
-                      <p className="font-semibold text-sm mb-3">
+                      <p className="font-semibold text-sm mb-1">
                         Order Status Breakdown
+                      </p>
+                      <p className="text-[11px] text-stone-500 mb-3 max-w-[240px]">
+                        All orders placed in this period. The total counts
+                        only confirmed to delivered orders (not failed or
+                        refunded), plus paid 3D printing sales.
                       </p>
                       {Object.entries(stats.orderBreakdown).map(([status, count]) => {
                         const colors = orderStatusColors[status] || {

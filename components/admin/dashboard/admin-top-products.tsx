@@ -13,10 +13,11 @@ interface TopProduct {
   name: string;
   image: string;
   price: number;
-  sales: number;
+  sold: number;
   revenue: number;
   category: string;
-  inStock: number;
+  stock: number;
+  periodDays: number;
 }
 
 export function AdminTopProducts() {
@@ -61,7 +62,12 @@ export function AdminTopProducts() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">Top Products</CardTitle>
+        <div>
+          <CardTitle className="text-lg font-semibold">Top Products</CardTitle>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Best sellers in the last 30 days
+          </p>
+        </div>
         <Link
           href="/control/products"
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -87,6 +93,11 @@ export function AdminTopProducts() {
           </div>
         ) : (
           <div className="space-y-4">
+            {products.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-6">
+                No confirmed sales in the last 30 days.
+              </p>
+            )}
             {products.map((product, index) => (
               <div
                 key={product.id}
@@ -108,21 +119,21 @@ export function AdminTopProducts() {
                     >
                       {product.name}
                     </Link>
-                    {product.inStock < 10 && (
+                    {product.stock < 10 && (
                       <Badge variant="destructive" className="text-xs">
                         Low Stock
                       </Badge>
                     )}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {product.category} • {product.inStock} in stock
+                    {product.category} • {product.stock} in stock
                   </div>
                 </div>
 
                 <div className="text-right">
                   <div className="flex items-center gap-1 text-sm font-medium text-green-600">
                     <TrendingUp className="w-3 h-3" />
-                    {product.sales} sold
+                    {product.sold} sold
                   </div>
                   <div className="text-xs text-gray-500">
                     {formatCurrency(product.revenue)}

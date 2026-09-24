@@ -24,6 +24,7 @@ const formatPaymentMethod = (method: string): string => {
         'cod': 'Cash on Delivery',
         'bkash': 'bKash',
         'bank_transfer': 'Bank Transfer',
+        'eps': 'Online Payment (EPS)',
     };
     return methods[method] || method;
 };

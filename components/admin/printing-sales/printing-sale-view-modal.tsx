@@ -42,7 +42,7 @@ export function PrintingSaleViewModal({
                 <DialogHeader>
                     <div className="flex items-center justify-between gap-3 pr-6">
                         <DialogTitle className="text-lg font-semibold text-stone-900">
-                            {sale.saleNumber}
+                            {sale.invoiceSerial || sale.saleNumber}
                         </DialogTitle>
                         <Badge
                             variant={getBadgeVariant(sale.paymentStatus) as any}

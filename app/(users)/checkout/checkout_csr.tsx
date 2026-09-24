@@ -498,9 +498,37 @@ const CheckoutParts = () => {
       }
       */
 
+      const trackingCode = order.trackingCode || order.trackingId || "";
+
+      // EPS: the order exists now, so hand the customer to the gateway. If
+      // the session can't be created, the result page lets them retry.
+      if (data.paymentMethod === "eps") {
+        const redirectURL = await axios
+          .post("/payment/eps/initiate", { orderId: order._id })
+          .then((res) => res.data?.data?.redirectURL as string | undefined)
+          .catch((error: any) => {
+            axiosErrorLogger({ error });
+            return undefined;
+          });
+
+        if (redirectURL) {
+          toast.success("Redirecting to secure payment...");
+          window.location.href = redirectURL;
+          return;
+        }
+
+        toast.error("Couldn't start the online payment. You can retry now.");
+        const params = new URLSearchParams({
+          status: "init_failed",
+          order: String(order._id),
+          ...(trackingCode ? { code: trackingCode } : {}),
+        });
+        router.push(`/payment/eps?${params.toString()}`);
+        return;
+      }
+
       // MANUAL TRANSACTION ID FLOW (Current Implementation)
       // Redirect to track order page with tracking code
-      const trackingCode = order.trackingCode || order.trackingId || "";
 
       if (trackingCode) {
         toast.success("Redirecting to order tracking...");
@@ -1142,7 +1170,7 @@ const CheckoutParts = () => {
               <div className="flex flex-col w-full h-fit py-2 gap-2.5 border-t border-stone-300">
                 {hasPreOrderItems && (
                   <p className="text-[11px] sm:text-[12px] leading-4 font-[500] text-amber-700 bg-amber-50 border border-amber-200 rounded-[4px] px-2 py-1.5">
-                    {`Your order includes Group Buy item(s), so Cash on Delivery/Pickup isn't available. Please pay via bKash or Bank Transfer.`}
+                    {`Your order includes Group Buy item(s), so Cash on Delivery/Pickup isn't available. Please pay online, via bKash or Bank Transfer.`}
                   </p>
                 )}
 
@@ -1188,6 +1216,22 @@ const CheckoutParts = () => {
                 <div className="flex items-center w-full h-fit py-0.5">
                   <input
                     type="radio"
+                    id="eps"
+                    {...register("paymentMethod")}
+                    value="eps"
+                    className="mr-2 accent-stone-800"
+                  />
+                  <label
+                    htmlFor="eps"
+                    className="text-[12px] sm:text-[13px] font-[600] text-stone-700"
+                  >
+                    {`Pay Online (Card / Mobile Banking / Net Banking)`}
+                  </label>
+                </div>
+
+                <div className="flex items-center w-full h-fit py-0.5">
+                  <input
+                    type="radio"
                     id="bkash"
                     {...register("paymentMethod")}
                     value="bkash"
@@ -1221,6 +1265,29 @@ const CheckoutParts = () => {
                   <EvoFormInputError>
                     {errors.paymentMethod.message}
                   </EvoFormInputError>
+                )}
+
+                {/* EPS hosted payment gateway */}
+                {paymentMethod === "eps" && (
+                  <div className="flex flex-col w-full h-fit mt-2 p-3 rounded-[4px] border border-[#0866FF] bg-gradient-to-br from-[#0866FF]/5 to-transparent gap-1">
+                    <p className="text-[11px] sm:text-[12px] font-[600] leading-4 text-[#0866FF]">
+                      {`Secure online payment via EPS`}
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-[11px] sm:text-[12px] font-[500] leading-4 text-stone-700">
+                      <li>
+                        {`Pay with Visa, Mastercard, Amex, bKash, Nagad, Rocket, Upay or internet banking.`}
+                      </li>
+                      <li>
+                        {`Amount to pay now: `}
+                        <span className="text-[#0866FF] font-semibold">{`${currencyFormatBDT(
+                          dueNowTotal,
+                        )} BDT`}</span>
+                      </li>
+                      <li>
+                        {`After placing the order you'll be redirected to the EPS payment page. Your payment is confirmed automatically.`}
+                      </li>
+                    </ul>
+                  </div>
                 )}
 
                 {/* bKash Manual Payment (Similar to Bank Transfer) */}

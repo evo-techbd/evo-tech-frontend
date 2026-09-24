@@ -622,8 +622,11 @@ const ProfitBreakdownPage = () => {
       {/* Info Note */}
       <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
         <p className="text-sm text-amber-800">
-          <strong>Note:</strong> Revenue = Product subtotal − Discounts.
-          Delivery fees and additional charges are excluded from revenue since they are
+          <strong>Note:</strong> Only orders that are confirmed, processing,
+          shipped or delivered are counted (pending, cancelled, failed and refunded
+          orders are excluded), dated by order placement in Bangladesh time.
+          Revenue = Product subtotal − Discounts. 3D printing sales count once
+          marked paid and carry no cost. Delivery fees and additional charges are excluded from revenue since they are
           passed to the delivery service company. Profit = Revenue − Cost of Goods
           (buying price × quantity). Click any month row above to filter orders below,
           or use the month dropdown. Click an order row to expand item-level profit.

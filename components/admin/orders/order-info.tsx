@@ -25,6 +25,7 @@ const paymentMethods: { [key: string]: string } = {
   nagad: "Nagad",
   credit_card: "Credit Card",
   bank_transfer: "Bank Transfer",
+  eps: "Online Payment (EPS)",
 };
 
 const getPaymentStatusBadge = (status: string) => {

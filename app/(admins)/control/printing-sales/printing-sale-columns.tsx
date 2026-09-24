@@ -9,6 +9,7 @@ import PrintingSaleTableRowActions from "./printing-sale-table-row-actions";
 export interface PrintingSaleType {
     _id: string;
     saleNumber: string;
+    invoiceSerial?: string;
     customerName: string;
     phone: string;
     email?: string;
@@ -40,14 +41,21 @@ export const printingSaleColumns: ColumnDef<PrintingSaleType>[] = [
         header: () => <div>Sale ID</div>,
         cell: ({ row }) => {
             const saleNumber = row.getValue("saleNumber") as string;
-            const id = row.original._id;
+            const { _id: id, invoiceSerial } = row.original;
             return (
-                <Link
-                    href={`/control/printing-sales/${id}`}
-                    className="text-primary text-xs font-medium hover:underline hover:underline-offset-2"
-                >
-                    {saleNumber}
-                </Link>
+                <div className="flex flex-col">
+                    <Link
+                        href={`/control/printing-sales/${id}`}
+                        className="text-primary text-xs font-medium hover:underline hover:underline-offset-2"
+                    >
+                        {invoiceSerial || saleNumber}
+                    </Link>
+                    {invoiceSerial && (
+                        <span className="text-[0.625rem] text-muted-foreground whitespace-nowrap">
+                            {saleNumber}
+                        </span>
+                    )}
+                </div>
             );
         },
     },

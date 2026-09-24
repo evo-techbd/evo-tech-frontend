@@ -79,10 +79,12 @@ function parseSvgElement(svgText: string): SVGElement {
 
 const formatPaymentMethod = (method: string): string => {
     const methods: { [key: string]: string } = {
+        'cash': 'Cash',
         'cop': 'Cash on Pickup',
         'cod': 'Cash on Delivery',
         'bkash': 'bKash',
         'bank_transfer': 'Bank Transfer',
+        'eps': 'Online Payment (EPS)',
     };
     return methods[method] || method;
 };
@@ -90,13 +92,69 @@ const formatPaymentMethod = (method: string): string => {
 type PaymentGroup = 'cash' | 'bank' | 'mobile' | 'other';
 
 const getPaymentGroup = (method: string): PaymentGroup => {
-    if (method === 'cop' || method === 'cod') return 'cash';
+    if (method === 'cash' || method === 'cop' || method === 'cod') return 'cash';
     if (method === 'bank_transfer') return 'bank';
     if (method === 'bkash') return 'mobile';
     return 'other';
 };
 
+// A single invoice line, independent of where it came from (order or 3D printing sale)
+export interface InvoiceLineItem {
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    // optional extra line printed under the name, e.g. "Color: Black"
+    detail?: string;
+}
+
+// Everything the shared A5 invoice layout needs. Orders and 3D printing sales
+// both map into this shape, so they print with the exact same design.
+export interface InvoiceData {
+    // shop-style monthly serial (e.g. "09001"); falls back to referenceId
+    serial?: string;
+    referenceLabel: string; // e.g. "Order ID", "Sale ID"
+    referenceId: string;
+    customerName: string;
+    phone: string;
+    address: string;
+    items: InvoiceLineItem[];
+    totalAmount: number;
+    paidAmount: number;
+    dueAmount: number;
+    // when unknown, no payment checkbox is marked and "Other" is left blank
+    paymentMethod?: string;
+    filename: string;
+}
+
 export async function generateInvoicePDF(order: OrderWithItemsType) {
+    const fullName = `${order.firstname}${order.lastname ? ` ${order.lastname}` : ''}`;
+    return renderInvoicePDF({
+        serial: order.invoiceSerial,
+        referenceLabel: 'Order ID',
+        referenceId: order.orderNumber,
+        customerName: fullName,
+        phone: order.phone,
+        address: [
+            order.houseStreet,
+            order.city,
+            order.postcode || '',
+            order.country,
+        ].filter(Boolean).join(', '),
+        items: (order.orderItems || []).map((item: OrderedItemType) => ({
+            name: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.productPrice,
+            detail: item.selectedColor ? `Color: ${item.selectedColor}` : undefined,
+        })),
+        totalAmount: order.totalPayable,
+        paidAmount: order.amountPaid,
+        dueAmount: order.amountDue,
+        paymentMethod: order.paymentMethod,
+        filename: `Invoice_${order.orderNumber}_EvoTechBD.pdf`,
+    });
+}
+
+export async function renderInvoicePDF(data: InvoiceData) {
     try {
         // Dynamically import the libraries
         if (!jsPDF) {
@@ -129,11 +187,11 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
         // Serial number and date are filled in automatically at print time,
         // rather than left blank for handwriting like the paper template.
         // invoiceSerial is a shop-style "MM" + 3-digit sequence that resets
-        // every month (e.g. "09001"), assigned once per order and distinct
-        // from the long internal orderNumber.
-        const serial = order.invoiceSerial
-            ? sanitizeText(order.invoiceSerial)
-            : sanitizeText(order.orderNumber);
+        // every month (e.g. "09001"), assigned once per order / printing sale
+        // and distinct from the long internal order or sale number.
+        const serial = data.serial
+            ? sanitizeText(data.serial)
+            : sanitizeText(data.referenceId);
         const printDate = new Date().toLocaleDateString('en-GB', {
             day: '2-digit',
             month: 'short',
@@ -155,13 +213,13 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
             return y + HEADER_ROW_H;
         };
 
-        const measureItemRowHeight = (item: OrderedItemType): { nameLines: string[]; rowHeight: number } => {
-            const nameLines = pdf.splitTextToSize(sanitizeText(item.productName), COLS.qtyX - COLS.productX - 3);
-            const lineCount = nameLines.length + (item.selectedColor ? 1 : 0);
+        const measureItemRowHeight = (item: InvoiceLineItem): { nameLines: string[]; rowHeight: number } => {
+            const nameLines = pdf.splitTextToSize(sanitizeText(item.name), COLS.qtyX - COLS.productX - 3);
+            const lineCount = nameLines.length + (item.detail ? 1 : 0);
             return { nameLines, rowHeight: Math.max(MIN_ROW_H, lineCount * 3.6 + 2.6) };
         };
 
-        const drawItemRow = (item: OrderedItemType, index: number, y: number): number => {
+        const drawItemRow = (item: InvoiceLineItem, index: number, y: number): number => {
             const { nameLines, rowHeight } = measureItemRowHeight(item);
 
             pdf.setFont('helvetica', 'normal');
@@ -174,17 +232,17 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
             pdf.text(String(index + 1), (COLS.noX + COLS.productX) / 2, midY, { align: 'center' });
             pdf.text(nameLines, COLS.productX + 1.5, textTop);
 
-            if (item.selectedColor) {
+            if (item.detail) {
                 pdf.setFontSize(6.8);
                 pdf.setTextColor(...COLORS.muted);
-                pdf.text(`Color: ${sanitizeText(item.selectedColor)}`, COLS.productX + 1.5, textTop + nameLines.length * 3.6);
+                pdf.text(sanitizeText(item.detail), COLS.productX + 1.5, textTop + nameLines.length * 3.6);
                 pdf.setFontSize(8);
                 pdf.setTextColor(...COLORS.text);
             }
 
             pdf.text(String(item.quantity), (COLS.qtyX + COLS.priceX) / 2, midY, { align: 'center' });
-            pdf.text(currencyFormatBDT(item.productPrice), (COLS.priceX + COLS.subtotalX) / 2, midY, { align: 'center' });
-            pdf.text(currencyFormatBDT(item.productPrice * item.quantity), COLS.endX - 2, midY, { align: 'right' });
+            pdf.text(currencyFormatBDT(item.unitPrice), (COLS.priceX + COLS.subtotalX) / 2, midY, { align: 'center' });
+            pdf.text(currencyFormatBDT(item.unitPrice * item.quantity), COLS.endX - 2, midY, { align: 'right' });
 
             pdf.setDrawColor(...COLORS.gridLine);
             pdf.setLineWidth(0.15);
@@ -221,7 +279,7 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
 
         pdf.setFontSize(7);
         pdf.setTextColor(...COLORS.muted);
-        pdf.text(`Order ID : ${sanitizeText(order.orderNumber)}`, MARGIN, y + 8);
+        pdf.text(`${data.referenceLabel} : ${sanitizeText(data.referenceId)}`, MARGIN, y + 8);
 
         const logoWidth = 44;
         const logoHeight = logoWidth / LOGO_ASPECT;
@@ -257,26 +315,19 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
 
         y += 5.7;
         pdf.setFontSize(8.5);
-        const fullName = `${order.firstname}${order.lastname ? ` ${order.lastname}` : ''}`;
         const rightColX = MARGIN + CONTENT_W * 0.56;
         pdf.setFont('helvetica', 'bold');
         pdf.text('Name :', MARGIN, y);
         pdf.text('Phone :', rightColX, y);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(sanitizeText(fullName), MARGIN + 12, y);
-        pdf.text(sanitizeText(order.phone), rightColX + 12, y);
+        pdf.text(sanitizeText(data.customerName), MARGIN + 12, y);
+        pdf.text(sanitizeText(data.phone), rightColX + 12, y);
 
         y += 5.7;
         pdf.setFont('helvetica', 'bold');
         pdf.text('Address :', MARGIN, y);
         pdf.setFont('helvetica', 'normal');
-        const addressText = [
-            sanitizeText(order.houseStreet),
-            sanitizeText(order.city),
-            order.postcode ? sanitizeText(order.postcode) : '',
-            sanitizeText(order.country),
-        ].filter(Boolean).join(', ');
-        const addressLines = pdf.splitTextToSize(addressText, CONTENT_W - 20);
+        const addressLines = pdf.splitTextToSize(sanitizeText(data.address), CONTENT_W - 20);
         pdf.text(addressLines, MARGIN + 18, y);
         y += addressLines.length * 4.3;
 
@@ -284,7 +335,7 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
         y += 3.2;
         const tableTop = y;
         let cursorY = drawTableHeaderRow(y);
-        const items = order.orderItems || [];
+        const items = data.items;
         let itemIndex = 0;
         let segmentTop = tableTop;
 
@@ -322,9 +373,9 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
         pdf.text('Payment Info', MARGIN, ITEMS_BOTTOM_LIMIT + 4.5);
 
         const totalsRows: [string, number][] = [
-            ['Total Amount :', order.totalPayable],
-            ['Paid Amount :', order.amountPaid],
-            ['Due Amount :', order.amountDue],
+            ['Total Amount :', data.totalAmount],
+            ['Paid Amount :', data.paidAmount],
+            ['Due Amount :', data.dueAmount],
         ];
         const totalsRowH = 5.4;
         const totalsBoxTop = ITEMS_BOTTOM_LIMIT + 0.5;
@@ -342,8 +393,10 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
             pdf.text(currencyFormatBDT(value), totalsBoxX + totalsBoxWidth - 2, rowY + totalsRowH / 2 + 1.3, { align: 'right' });
         });
 
-        // Payment method checkbox is auto-marked from the order's actual payment method
-        const paymentGroup = getPaymentGroup(order.paymentMethod);
+        // Payment method checkbox is auto-marked from the actual payment method, if known
+        const paymentGroup: PaymentGroup | null = data.paymentMethod
+            ? getPaymentGroup(data.paymentMethod)
+            : null;
         const checkboxY = ITEMS_BOTTOM_LIMIT + 7.5;
         const checkboxOptions: { key: PaymentGroup; label: string; x: number }[] = [
             { key: 'cash', label: 'Cash', x: 0 },
@@ -372,9 +425,9 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
         pdf.setFontSize(7.6);
         pdf.setTextColor(...COLORS.text);
         pdf.text('Other :', MARGIN, otherY);
-        if (paymentGroup === 'other') {
+        if (paymentGroup === 'other' && data.paymentMethod) {
             pdf.setFont('helvetica', 'normal');
-            pdf.text(formatPaymentMethod(order.paymentMethod), MARGIN + 14, otherY);
+            pdf.text(formatPaymentMethod(data.paymentMethod), MARGIN + 14, otherY);
         } else {
             pdf.setDrawColor(...COLORS.gridLine);
             pdf.setLineWidth(0.2);
@@ -424,8 +477,7 @@ export async function generateInvoicePDF(order: OrderWithItemsType) {
         pdf.text('Authorized By', pageWidth - MARGIN - 25, sigY + 4, { align: 'center' });
 
         // Save the PDF
-        const filename = `Invoice_${sanitizeText(order.orderNumber)}_EvoTechBD.pdf`;
-        pdf.save(filename);
+        pdf.save(sanitizeText(data.filename));
 
         return true;
 

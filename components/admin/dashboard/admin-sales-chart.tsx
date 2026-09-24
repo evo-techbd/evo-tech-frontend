@@ -193,7 +193,7 @@ export function AdminSalesChart() {
         </div>
         <div className="flex gap-6 mt-4">
           <div>
-            <p className="text-sm text-muted-foreground">Total Sales</p>
+            <p className="text-sm text-muted-foreground" title="Confirmed-or-later orders after discount (excl. delivery) + paid 3D printing">Total Sales</p>
             <p className="text-2xl font-bold">BDT {totalSales.toLocaleString()}</p>
           </div>
           <div>

@@ -31,6 +31,7 @@ const paymentMethods: { [key: string]: string } = {
   cod: "Cash on Delivery",
   bkash: "bKash",
   bank_transfer: "Bank Transfer",
+  eps: "Online Payment (EPS)",
 };
 
 const OrderConfirmationPage = async ({

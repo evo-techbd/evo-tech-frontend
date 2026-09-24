@@ -47,9 +47,9 @@ const PrintingSaleTableRowActions = ({ row, onDataChange, onView }: RowActionPro
         setIsPrinting(true);
         try {
             await generatePrintingSalePDF(sale);
-            toast.success("Receipt downloaded successfully");
+            toast.success("Invoice downloaded successfully");
         } catch (error) {
-            toast.error("Failed to generate receipt");
+            toast.error("Failed to generate invoice");
         } finally {
             setIsPrinting(false);
         }
@@ -81,7 +81,7 @@ const PrintingSaleTableRowActions = ({ row, onDataChange, onView }: RowActionPro
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 rounded-full bg-green-100 text-green-600 hover:text-green-700 hover:bg-green-50"
-                aria-label="Print receipt"
+                aria-label="Download invoice"
                 onClick={handlePrint}
                 disabled={isPrinting}
             >

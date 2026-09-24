@@ -55,7 +55,7 @@ export const getCheckoutSchema = (hasPreOrderItems: boolean = false) =>
         errorMap: () => ({ message: "Select a valid shipping type" }),
       }
     ),
-    paymentMethod: z.enum(["cop", "cod", "bkash", "bank_transfer", ""], {
+    paymentMethod: z.enum(["cop", "cod", "bkash", "bank_transfer", "eps", ""], {
       errorMap: () => ({ message: "Select a valid payment method" }),
     }),
     pickupPointId: z.string().nullable().optional(), // optional
@@ -89,13 +89,14 @@ export const getCheckoutSchema = (hasPreOrderItems: boolean = false) =>
     // Conditional validation for express delivery payment method
     if (data.shippingType === "express_delivery") {
       if (
+        data.paymentMethod !== "eps" &&
         data.paymentMethod !== "bkash" &&
         data.paymentMethod !== "bank_transfer"
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
-            "Select bKash or Bank Transfer as payment method for express delivery",
+            "Select Online Payment, bKash or Bank Transfer for express delivery",
           path: ["paymentMethod"],
         });
       }
@@ -105,6 +106,7 @@ export const getCheckoutSchema = (hasPreOrderItems: boolean = false) =>
     if (data.shippingType === "regular_delivery") {
       if (
         data.paymentMethod !== "cod" &&
+        data.paymentMethod !== "eps" &&
         data.paymentMethod !== "bkash" &&
         data.paymentMethod !== "bank_transfer"
       ) {
@@ -120,6 +122,7 @@ export const getCheckoutSchema = (hasPreOrderItems: boolean = false) =>
     if (data.shippingType === "pickup_point") {
       if (
         data.paymentMethod !== "cop" &&
+        data.paymentMethod !== "eps" &&
         data.paymentMethod !== "bkash" &&
         data.paymentMethod !== "bank_transfer"
       ) {
@@ -165,7 +168,7 @@ export const getCheckoutSchema = (hasPreOrderItems: boolean = false) =>
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          "Cash on Delivery/Pickup isn't available — your order includes Group Buy item(s). Please pay via bKash or Bank Transfer.",
+          "Cash on Delivery/Pickup isn't available — your order includes Group Buy item(s). Please pay online, via bKash or Bank Transfer.",
         path: ["paymentMethod"],
       });
     }

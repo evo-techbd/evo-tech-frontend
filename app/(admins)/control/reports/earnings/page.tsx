@@ -37,7 +37,7 @@ interface EarningsData {
   yearly: {
     earnings: number;
     orders: number;
-    growth: number;
+    growth: number | null;
     breakdown: Array<{
       year: number;
       earnings: number;
@@ -47,7 +47,7 @@ interface EarningsData {
   monthly: {
     earnings: number;
     orders: number;
-    growth: number;
+    growth: number | null;
     breakdown: Array<{
       month: number;
       earnings: number;
@@ -97,6 +97,10 @@ export default function EarningsReportPage() {
     fetchEarnings();
   }, [fetchEarnings]);
 
+  // Growth compares the same span of the previous period; null = no base
+  const formatGrowth = (value: number | null) =>
+    value === null ? "N/A" : `${value.toFixed(1)}%`;
+
   const formatCurrency = (amount: number) => {
     return `BDT ${new Intl.NumberFormat("en-BD", {
       minimumFractionDigits: 0,
@@ -126,12 +130,12 @@ export default function EarningsReportPage() {
       ["CURRENT MONTH PERFORMANCE"],
       ["Monthly Earnings", formatCurrency(earnings.monthly.earnings)],
       ["Monthly Orders", formatNumber(earnings.monthly.orders)],
-      ["Monthly Growth", `${earnings.monthly.growth.toFixed(1)}%`],
+      ["Monthly Growth", formatGrowth(earnings.monthly.growth)],
       [""],
       ["CURRENT YEAR PERFORMANCE"],
       ["Yearly Earnings", formatCurrency(earnings.yearly.earnings)],
       ["Yearly Orders", formatNumber(earnings.yearly.orders)],
-      ["Yearly Growth", `${earnings.yearly.growth.toFixed(1)}%`],
+      ["Yearly Growth", formatGrowth(earnings.yearly.growth)],
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
     // Set column widths
@@ -318,21 +322,25 @@ export default function EarningsReportPage() {
               {formatCurrency(earnings?.monthly.earnings || 0)}
             </div>
             <div className="flex items-center space-x-1 text-xs text-stone-600 mt-1">
-              {(earnings?.monthly.growth || 0) >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-green-600" />
+              {earnings?.monthly.growth == null ? (
+                <span>No last-month data to compare</span>
               ) : (
-                <TrendingDown className="h-3 w-3 text-red-600" />
+                <>
+                  {earnings.monthly.growth >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-600" />
+                  )}
+                  <span
+                    className={
+                      earnings.monthly.growth >= 0 ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {Math.abs(earnings.monthly.growth).toFixed(1)}%
+                  </span>
+                  <span>vs same period last month</span>
+                </>
               )}
-              <span
-                className={
-                  (earnings?.monthly.growth || 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                }
-              >
-                {Math.abs(earnings?.monthly.growth || 0).toFixed(1)}%
-              </span>
-              <span>from last month</span>
             </div>
           </CardContent>
         </Card>
@@ -349,21 +357,25 @@ export default function EarningsReportPage() {
               {formatCurrency(earnings?.yearly.earnings || 0)}
             </div>
             <div className="flex items-center space-x-1 text-xs text-stone-600 mt-1">
-              {(earnings?.yearly.growth || 0) >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-green-600" />
+              {earnings?.yearly.growth == null ? (
+                <span>No last-year data to compare</span>
               ) : (
-                <TrendingDown className="h-3 w-3 text-red-600" />
+                <>
+                  {earnings.yearly.growth >= 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-600" />
+                  )}
+                  <span
+                    className={
+                      earnings.yearly.growth >= 0 ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {Math.abs(earnings.yearly.growth).toFixed(1)}%
+                  </span>
+                  <span>vs same period last year</span>
+                </>
               )}
-              <span
-                className={
-                  (earnings?.yearly.growth || 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                }
-              >
-                {Math.abs(earnings?.yearly.growth || 0).toFixed(1)}%
-              </span>
-              <span>from last year</span>
             </div>
           </CardContent>
         </Card>

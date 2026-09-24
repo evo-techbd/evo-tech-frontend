@@ -20,8 +20,8 @@ interface DashboardStats {
   totalOrders: number;
   totalCustomers: number;
   totalProducts: number;
-  revenueGrowth: number;
-  ordersGrowth: number;
+  revenueGrowth: number | null;
+  ordersGrowth: number | null;
 }
 
 const ReportsPage = () => {
@@ -55,6 +55,12 @@ const ReportsPage = () => {
       maximumFractionDigits: 0,
     }).format(amount)}`;
   };
+
+  // Month so far vs the same days of last month; null = nothing to compare
+  const formatGrowth = (value: number | null | undefined) =>
+    value === null || value === undefined
+      ? "No data last month to compare"
+      : `${value >= 0 ? "+" : ""}${value.toFixed(1)}% vs same days last month`;
 
   const avgOrderValue =
     stats && stats.totalOrders > 0 ? stats.totalRevenue / stats.totalOrders : 0;
@@ -97,9 +103,7 @@ const ReportsPage = () => {
             <p className="text-xs text-muted-foreground">
               {loading
                 ? "..."
-                : `${
-                    stats && stats.revenueGrowth >= 0 ? "+" : ""
-                  }${stats?.revenueGrowth.toFixed(1)}% from last month`}
+                : formatGrowth(stats?.revenueGrowth)}
             </p>
           </CardContent>
         </Card>
@@ -116,9 +120,7 @@ const ReportsPage = () => {
             <p className="text-xs text-muted-foreground">
               {loading
                 ? "..."
-                : `${
-                    stats && stats.ordersGrowth >= 0 ? "+" : ""
-                  }${stats?.ordersGrowth.toFixed(1)}% from last month`}
+                : formatGrowth(stats?.ordersGrowth)}
             </p>
           </CardContent>
         </Card>

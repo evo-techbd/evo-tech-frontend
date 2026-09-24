@@ -18,6 +18,7 @@ import axios from "@/utils/axios/axios";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PrintingSaleType } from "../printing-sale-columns";
+import { PrintingSaleInvoiceButton } from "@/components/admin/printing-sales/printing-sale-invoice-button";
 
 export default function PrintingSaleDetailPage() {
     const params = useParams();
@@ -94,9 +95,10 @@ export default function PrintingSaleDetailPage() {
                     </Link>
                     <div>
                         <h2 className="text-lg lg:text-xl font-bold tracking-tight text-stone-900">
-                            {sale.saleNumber}
+                            {sale.invoiceSerial || sale.saleNumber}
                         </h2>
                         <p className="text-sm text-muted-foreground mt-0.5">
+                            {sale.invoiceSerial && <>{sale.saleNumber} · </>}
                             Created on{" "}
                             {sale.createdAt
                                 ? format(new Date(sale.createdAt), "dd MMM yyyy, hh:mm a")
@@ -105,6 +107,7 @@ export default function PrintingSaleDetailPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <PrintingSaleInvoiceButton sale={sale} />
                     <Badge
                         variant={getBadgeVariant(sale.paymentStatus) as any}
                         className="capitalize text-sm px-3 py-1"

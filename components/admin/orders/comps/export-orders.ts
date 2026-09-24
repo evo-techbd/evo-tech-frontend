@@ -10,6 +10,7 @@ const formatPaymentMethod = (method: string): string => {
         'nagad': 'Nagad',
         'credit_card': 'Credit Card',
         'bank_transfer': 'Bank Transfer',
+        'eps': 'Online Payment (EPS)',
     };
     return methods[method] || method;
 };
