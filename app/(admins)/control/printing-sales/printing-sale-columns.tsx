@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import PrintingSaleTableRowActions from "./printing-sale-table-row-actions";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 
 export interface PrintingSaleType {
     _id: string;
@@ -109,22 +110,9 @@ export const printingSaleColumns: ColumnDef<PrintingSaleType>[] = [
         cell: ({ row }) => {
             const status = row.getValue("paymentStatus") as string;
 
-            const getBadgeVariant = (status: string) => {
-                switch (status) {
-                    case "paid":
-                        return "success";
-                    case "pending":
-                        return "warning";
-                    case "cancelled":
-                        return "failed";
-                    default:
-                        return "default";
-                }
-            };
-
             return (
                 <Badge
-                    variant={getBadgeVariant(status) as any}
+                    variant={getPaymentStatusVariant(status)}
                     className="capitalize whitespace-nowrap"
                 >
                     {status || "N/A"}

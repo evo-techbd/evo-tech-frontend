@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 
 const PAYMENT_STATUSES = [
     { value: "pending", label: "Pending" },
@@ -30,19 +31,6 @@ export function PrintingSalePaymentStatusDropdown({
     onDataChange,
 }: PrintingSalePaymentStatusDropdownProps) {
     const [isLoading, setIsLoading] = useState(false);
-
-    const getBadgeVariant = (status: string) => {
-        switch (status) {
-            case "paid":
-                return "success";
-            case "pending":
-                return "warning";
-            case "cancelled":
-                return "failed";
-            default:
-                return "default";
-        }
-    };
 
     const handleStatusChange = async (newStatus: string) => {
         if (newStatus === currentStatus) return;
@@ -74,7 +62,7 @@ export function PrintingSalePaymentStatusDropdown({
             >
                 <SelectTrigger className="h-7 w-fit gap-1 items-center px-1.5 py-0 border-0 focus:ring-0 shadow-none bg-transparent hover:bg-stone-100 transition-colors">
                     <Badge
-                        variant={getBadgeVariant(currentStatus) as any}
+                        variant={getPaymentStatusVariant(currentStatus)}
                         className="capitalize whitespace-nowrap px-1.5 py-0.5 cursor-pointer pointer-events-none"
                     >
                         {currentStatus || "N/A"}

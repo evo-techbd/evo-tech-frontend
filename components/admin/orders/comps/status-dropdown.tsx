@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 
 interface StatusDropdownProps {
   orderId: string;
@@ -62,22 +63,8 @@ export function StatusDropdown({
         default:
           return "customdefault";
       }
-    } else {
-      switch (status) {
-        case "paid":
-          return "success";
-        case "partial":
-          return "warning";
-        case "pending":
-          return "failed";
-        case "refunded":
-          return "warning";
-        case "failed":
-          return "failed";
-        default:
-          return "default";
-      }
     }
+    return getPaymentStatusVariant(status);
   };
 
   const options = type === "orderStatus" ? ORDER_STATUSES : PAYMENT_STATUSES;

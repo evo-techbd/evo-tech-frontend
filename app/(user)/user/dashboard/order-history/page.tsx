@@ -1,7 +1,9 @@
 'use client';
 
 import { useUserOrders } from '@/hooks/use-user-dashboard';
-import { currencyFormatBDT } from '@/lib/all_utils';
+import { cn, currencyFormatBDT } from '@/lib/all_utils';
+import { badgeVariants } from '@/components/ui/badge';
+import { getPaymentStatusLabel, getPaymentStatusVariant } from '@/utils/payment-status';
 import Link from 'next/link';
 import { useState } from 'react';
 import { MessageSquare } from 'lucide-react';
@@ -159,16 +161,11 @@ export default function OrderHistoryPage() {
                                                 }`}>
                                                     {order.orderStatus === 'shipped' ? 'Assigned to Rider' : order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
                                                 </span>
-                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                                    order.paymentStatus === 'paid'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : order.paymentStatus === 'failed'
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : order.paymentStatus === 'refunded'
-                                                        ? 'bg-gray-100 text-gray-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                    {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                                                <span className={cn(
+                                                    badgeVariants({ variant: getPaymentStatusVariant(order.paymentStatus) }),
+                                                    'px-3 py-1 rounded-full text-sm font-medium'
+                                                )}>
+                                                    {getPaymentStatusLabel(order.paymentStatus)}
                                                 </span>
                                             </div>
                                             <div className="text-lg font-semibold text-gray-900">

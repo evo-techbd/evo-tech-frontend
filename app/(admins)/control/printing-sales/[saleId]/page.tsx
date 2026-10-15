@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { PrintingSaleType } from "../printing-sale-columns";
 import { PrintingSaleInvoiceButton } from "@/components/admin/printing-sales/printing-sale-invoice-button";
+import { PaymentHistory } from "@/components/admin/payments/payment-history";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 
 export default function PrintingSaleDetailPage() {
     const params = useParams();
@@ -55,15 +57,6 @@ export default function PrintingSaleDetailPage() {
             toast.error("Failed to update payment status");
         } finally {
             setUpdating(false);
-        }
-    };
-
-    const getBadgeVariant = (status: string) => {
-        switch (status) {
-            case "paid": return "success";
-            case "pending": return "warning";
-            case "cancelled": return "failed";
-            default: return "default";
         }
     };
 
@@ -109,7 +102,7 @@ export default function PrintingSaleDetailPage() {
                 <div className="flex items-center gap-2">
                     <PrintingSaleInvoiceButton sale={sale} />
                     <Badge
-                        variant={getBadgeVariant(sale.paymentStatus) as any}
+                        variant={getPaymentStatusVariant(sale.paymentStatus)}
                         className="capitalize text-sm px-3 py-1"
                     >
                         {sale.paymentStatus}
@@ -242,6 +235,14 @@ export default function PrintingSaleDetailPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Payment History */}
+            <PaymentHistory
+                entityType="printing-sale"
+                entityId={sale._id}
+                refreshKey={sale.updatedAt}
+                className="bg-card"
+            />
         </div>
     );
 }

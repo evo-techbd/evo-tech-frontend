@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { OrderWithItemsType } from "@/schemas/admin/sales/orderSchema";
 import OrderTableRowActions from "@/components/admin/orders/comps/order-table-row-actions";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 
 export const ordersColumns: ColumnDef<OrderWithItemsType>[] = [
   {
@@ -143,27 +144,9 @@ export const ordersColumns: ColumnDef<OrderWithItemsType>[] = [
     cell: ({ row }) => {
       const status = row.getValue("paymentStatus") as string;
 
-      // Define badge styles based on status
-      const getBadgeVariant = (status: string) => {
-        switch (status) {
-          case "paid":
-            return "success";
-          case "partial":
-            return "warning";
-          case "pending":
-            return "failed";
-          case "refunded":
-            return "warning";
-          case "failed":
-            return "failed";
-          default:
-            return "default";
-        }
-      };
-
       return (
         <Badge
-          variant={getBadgeVariant(status) as any}
+          variant={getPaymentStatusVariant(status)}
           className="capitalize whitespace-nowrap"
         >
           {status?.replace("_", " ") || "N/A"}

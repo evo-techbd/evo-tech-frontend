@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { currencyFormatBDT } from "@/lib/all_utils";
 import { OrderWithItemsType } from "@/schemas/admin/sales/orderSchema";
+import { PaymentHistory } from "@/components/admin/payments/payment-history";
+import { getPaymentStatusLabel, getPaymentStatusVariant } from "@/utils/payment-status";
 
 const shippingTypes: { [key: string]: string } = {
     home_delivery: "Home Delivery",
@@ -56,26 +58,11 @@ const getOrderStatusBadge = (status: string) => {
     );
 };
 
-const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
-        paid: { variant: "success" as const, text: "Paid" },
-        partial: { variant: "warning" as const, text: "Partial" },
-        pending: { variant: "failed" as const, text: "Pending" },
-        failed: { variant: "failed" as const, text: "Failed" },
-        refunded: { variant: "warning" as const, text: "Refunded" },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || {
-        variant: "outline" as const,
-        text: status,
-    };
-
-    return (
-        <Badge variant={config.variant} className="text-[0.625rem] leading-none py-0.5 font-medium capitalize">
-            {config.text}
-        </Badge>
-    );
-};
+const getPaymentStatusBadge = (status: string) => (
+    <Badge variant={getPaymentStatusVariant(status)} className="text-[0.625rem] leading-none py-0.5 font-medium capitalize">
+        {getPaymentStatusLabel(status)}
+    </Badge>
+);
 
 const fetchOrderWithItems = async (orderId: string): Promise<OrderWithItemsType> => {
     const response = await fetch(`/api/admin/orders/${orderId}`, {
@@ -269,6 +256,8 @@ const OrderDetailsModal = ({ orderId, open, onOpenChange }: OrderDetailsModalPro
                                 </div>
                             </div>
                         </div>
+
+                        <PaymentHistory entityType="order" entityId={order._id || orderId || undefined} variant="section" />
 
                         <div className="flex justify-end">
                             <Button variant="outline" size="sm" onClick={goToFullDetails}>

@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 import { Separator } from "@/components/ui/separator";
 import {
   Package,
@@ -101,23 +102,6 @@ const getStatusColor = (status: string) => {
       return "bg-green-100 text-green-800 border-green-300";
     case "cancelled":
       return "bg-red-100 text-red-800 border-red-300";
-    default:
-      return "bg-stone-100 text-stone-800 border-stone-300";
-  }
-};
-
-const getPaymentStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case "paid":
-      return "bg-green-100 text-green-800 border-green-300";
-    case "partial":
-      return "bg-blue-100 text-blue-800 border-blue-300";
-    case "pending":
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    case "failed":
-      return "bg-red-100 text-red-800 border-red-300";
-    case "refunded":
-      return "bg-orange-100 text-orange-800 border-orange-300";
     default:
       return "bg-stone-100 text-stone-800 border-stone-300";
   }
@@ -387,9 +371,10 @@ export default function TrackOrderClient() {
                     <div>
                       <p className="text-xs text-stone-500">Payment Status</p>
                       <Badge
-                        className={`${getPaymentStatusColor(
+                        variant={getPaymentStatusVariant(
                           trackingData.order.paymentStatus,
-                        )} border text-xs mt-1`}
+                        )}
+                        className="text-xs mt-1"
                       >
                         {trackingData.order.paymentStatus.toUpperCase()}
                       </Badge>

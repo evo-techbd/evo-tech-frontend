@@ -34,6 +34,11 @@ import {
 import { getCurrentUser } from "@/utils/cookies";
 import axios from "@/utils/axios/axios";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import {
+  getPaymentStatusLabel,
+  getPaymentStatusVariant,
+} from "@/utils/payment-status";
 
 interface MonthData {
   month: number;
@@ -190,10 +195,6 @@ const ProfitBreakdownPage = () => {
       shipped: "bg-violet-100 text-violet-700",
       delivered: "bg-green-100 text-green-700",
       cancelled: "bg-red-100 text-red-700",
-      paid: "bg-green-100 text-green-700",
-      partial: "bg-amber-100 text-amber-700",
-      failed: "bg-red-100 text-red-700",
-      refunded: "bg-stone-100 text-stone-700",
     };
     return (
       <span
@@ -488,7 +489,13 @@ const ProfitBreakdownPage = () => {
                           <TableCell className="text-center">
                             <div className="flex items-center gap-1 justify-center flex-wrap">
                               {getStatusBadge(order.orderStatus)}
-                              {getStatusBadge(order.paymentStatus)}
+                              <Badge
+                                variant={getPaymentStatusVariant(
+                                  order.paymentStatus,
+                                )}
+                              >
+                                {getPaymentStatusLabel(order.paymentStatus)}
+                              </Badge>
                             </div>
                           </TableCell>
                           <TableCell className="text-right">{formatCurrency(order.revenue)}</TableCell>

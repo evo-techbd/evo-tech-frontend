@@ -1,10 +1,12 @@
 "use client";
 
 import { OrderUpdateForm } from "@/components/admin/orders/order-update-form";
+import { PaymentHistory } from "@/components/admin/payments/payment-history";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { currencyFormatBDT } from "@/lib/all_utils";
 import { OrderWithItemsType } from "@/schemas/admin/sales/orderSchema";
+import { getPaymentStatusLabel, getPaymentStatusVariant } from "@/utils/payment-status";
 import { useEffect, useState } from "react";
 
 const pickupPoints: { [key: string]: string } = {
@@ -28,29 +30,14 @@ const paymentMethods: { [key: string]: string } = {
   eps: "Online Payment (EPS)",
 };
 
-const getPaymentStatusBadge = (status: string) => {
-  const statusConfig = {
-    paid: { variant: "success" as const, text: "Paid" },
-    partial: { variant: "warning" as const, text: "Partial" },
-    pending: { variant: "failed" as const, text: "Pending" },
-    failed: { variant: "failed" as const, text: "Failed" },
-    refunded: { variant: "warning" as const, text: "Refunded" },
-  };
-
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    variant: "outline" as const,
-    text: status,
-  };
-
-  return (
-    <Badge
-      variant={config.variant}
-      className="text-[0.625rem] leading-none py-0.5 font-medium capitalize"
-    >
-      {config.text}
-    </Badge>
-  );
-};
+const getPaymentStatusBadge = (status: string) => (
+  <Badge
+    variant={getPaymentStatusVariant(status)}
+    className="text-[0.625rem] leading-none py-0.5 font-medium capitalize"
+  >
+    {getPaymentStatusLabel(status)}
+  </Badge>
+);
 
 const getOrderStatusBadge = (status: string) => {
   const statusConfig = {
@@ -287,6 +274,14 @@ const OrderInfo = ({
               )}
             </CardContent>
           </Card>
+
+          {/* Payment History */}
+          <PaymentHistory
+            entityType="order"
+            entityId={orderData._id}
+            refreshKey={currentOrderData}
+            titleClassName="underline underline-offset-2"
+          />
         </div>
 
         {/* Order Items & Summary */}

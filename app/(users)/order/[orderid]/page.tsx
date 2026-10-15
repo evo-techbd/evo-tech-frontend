@@ -11,6 +11,12 @@ import {
   IoTimeOutline,
   IoCard,
 } from "react-icons/io5";
+import { badgeVariants } from "@/components/ui/badge";
+import { cn } from "@/lib/all_utils";
+import {
+  getPaymentStatusLabel,
+  getPaymentStatusVariant,
+} from "@/utils/payment-status";
 
 export const metadata: Metadata = {
   title: "Order Info",
@@ -32,6 +38,15 @@ const paymentMethods: { [key: string]: string } = {
   bkash: "bKash",
   bank_transfer: "Bank Transfer",
   eps: "Online Payment (EPS)",
+};
+
+const paymentStatusIcons: { [key: string]: typeof IoAlertCircle } = {
+  pending: IoTimeOutline,
+  partial: IoTimeOutline,
+  paid: IoCheckmarkCircle,
+  failed: IoAlertCircle,
+  cancelled: IoAlertCircle,
+  refunded: IoCard,
 };
 
 const OrderConfirmationPage = async ({
@@ -139,43 +154,18 @@ const OrderConfirmationPage = async ({
   };
 
   const getPaymentStatusText = (status: string) => {
-    switch (status) {
-      case "pending":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">
-            <IoTimeOutline className="w-3 h-3" />
-            {"Pending"}
-          </span>
-        );
-      case "paid":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
-            <IoCheckmarkCircle className="w-3 h-3" />
-            {"Paid"}
-          </span>
-        );
-      case "failed":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-700">
-            <IoAlertCircle className="w-3 h-3" />
-            {"Failed"}
-          </span>
-        );
-      case "refunded":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-            <IoCard className="w-3 h-3" />
-            {"Refunded"}
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
-            <IoAlertCircle className="w-3 h-3" />
-            {"Unknown"}
-          </span>
-        );
-    }
+    const Icon = paymentStatusIcons[status] ?? IoAlertCircle;
+    return (
+      <span
+        className={cn(
+          badgeVariants({ variant: getPaymentStatusVariant(status) }),
+          "gap-1 px-2 py-1 text-xs rounded-full",
+        )}
+      >
+        <Icon className="w-3 h-3" />
+        {getPaymentStatusLabel(status)}
+      </span>
+    );
   };
 
   if (getOrderDetails === null) {

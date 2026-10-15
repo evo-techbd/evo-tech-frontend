@@ -9,6 +9,8 @@ import {
     DialogTitle,
 } from "@/components/ui/evo_dialog";
 import { PrintingSaleType } from "@/app/(admins)/control/printing-sales/printing-sale-columns";
+import { PaymentHistory } from "@/components/admin/payments/payment-history";
+import { getPaymentStatusVariant } from "@/utils/payment-status";
 
 interface PrintingSaleViewModalProps {
     sale: PrintingSaleType | null;
@@ -23,19 +25,6 @@ export function PrintingSaleViewModal({
 }: PrintingSaleViewModalProps) {
     if (!sale) return null;
 
-    const getBadgeVariant = (status: string) => {
-        switch (status) {
-            case "paid":
-                return "success";
-            case "pending":
-                return "warning";
-            case "cancelled":
-                return "failed";
-            default:
-                return "default";
-        }
-    };
-
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -45,7 +34,7 @@ export function PrintingSaleViewModal({
                             {sale.invoiceSerial || sale.saleNumber}
                         </DialogTitle>
                         <Badge
-                            variant={getBadgeVariant(sale.paymentStatus) as any}
+                            variant={getPaymentStatusVariant(sale.paymentStatus)}
                             className="capitalize"
                         >
                             {sale.paymentStatus}
@@ -150,6 +139,13 @@ export function PrintingSaleViewModal({
                             </table>
                         </div>
                     </div>
+
+                    <PaymentHistory
+                        entityType="printing-sale"
+                        entityId={sale._id}
+                        refreshKey={sale.updatedAt}
+                        variant="section"
+                    />
 
                     <p className="text-xs text-muted-foreground">
                         Created on{" "}

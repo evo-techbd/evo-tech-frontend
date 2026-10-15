@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "@/utils/axios/axios";
 import { getCurrentUser } from "@/utils/cookies";
+import { Badge } from "@/components/ui/badge";
+import {
+  getPaymentStatusLabel,
+  getPaymentStatusVariant,
+} from "@/utils/payment-status";
 
 export default function OrderDetailsPage() {
   const params = useParams() as { id?: string };
@@ -69,7 +74,12 @@ export default function OrderDetailsPage() {
           </div>
           <div>
             <div className="text-sm text-gray-600">Payment</div>
-            <div className="font-medium">{order.paymentStatus}</div>
+            <Badge
+              variant={getPaymentStatusVariant(order.paymentStatus)}
+              className="text-xs mt-1"
+            >
+              {getPaymentStatusLabel(order.paymentStatus)}
+            </Badge>
           </div>
         </div>
 

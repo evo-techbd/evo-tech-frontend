@@ -19,6 +19,7 @@ const badgeVariants = cva(
         success: "border border-emerald-300 bg-emerald-100 text-emerald-700",
         warning: "border border-orange-300 bg-orange-100/80 text-orange-500",
         failed: "border border-rose-300 bg-rose-100/80 text-rose-700",
+        neutral: "border border-slate-300 bg-slate-100 text-slate-700",
         inprogress: "border border-sky-300 bg-sky-100 text-sky-700",
         confirmed: "border border-blue-300 bg-blue-100 text-blue-700",
         processing: "border border-violet-300 bg-violet-100 text-violet-700",
