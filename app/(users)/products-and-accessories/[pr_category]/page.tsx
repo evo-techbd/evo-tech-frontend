@@ -138,6 +138,8 @@ const ProductCategory = async ({ params, searchParams }: currentRouteProps) => {
     i_slug: product.slug,
     i_price: product.price,
     i_prevprice: product.previousPrice || 0,
+    i_preorderprice: product.preOrderPrice || null,
+    i_ispreorder: product.isPreOrder || false,
     i_instock: product.inStock !== undefined ? product.inStock : true,
     i_mainimg: product.mainImage || "",
     i_weight: product.weight || 0,

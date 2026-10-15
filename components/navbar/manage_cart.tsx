@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { getOptimizedImageUrl } from "@/lib/image-loader";
@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { setCartData, removeCartItem } from "@/store/slices/cartslice";
 import { calculateCartBreakdown } from "@/utils/cart-totals";
+import { syncCartPricing } from "@/utils/cart-pricing-sync";
 
 const LoadMotionFeatures = () =>
   import("@/utils/framer/features").then((res) => res.default);
@@ -84,6 +85,35 @@ const ManageCart = () => {
     if (cartData === null) {
       fetchCartDB();
     }
+  }, [dispatch, cartData]);
+
+  // Once per page load, re-price the stored cart against live product data
+  // so lines added before an admin change (e.g. Group Buy turned off) don't
+  // keep showing a price checkout won't charge.
+  const cartPricingSynced = useRef(false);
+  useEffect(() => {
+    if (cartPricingSynced.current || !cartData || cartData.length === 0) return;
+    cartPricingSynced.current = true;
+
+    syncCartPricing(cartData)
+      .then((syncedItems) => {
+        if (!syncedItems) return;
+
+        const localevoFrontCart = localStorage.getItem("evoFrontCart");
+        const parsedCart = localevoFrontCart
+          ? JSON.parse(localevoFrontCart)
+          : null;
+        const updatedCart = {
+          items: syncedItems,
+          ctoken: parsedCart?.ctoken ?? "",
+        };
+
+        dispatch(setCartData(syncedItems));
+        localStorage.setItem("evoFrontCart", JSON.stringify(updatedCart));
+      })
+      .catch(() => {
+        // Keep the stored cart as-is; checkout re-prices on the server anyway
+      });
   }, [dispatch, cartData]);
 
   useEffect(() => {

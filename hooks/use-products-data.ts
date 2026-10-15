@@ -102,6 +102,8 @@ export function useProductsData(): UseProductsDataReturn {
         i_brand:
           product.brand?.name || product.brand?.slug || product.brand || "N/A",
         i_published: product.published,
+        i_ispreorder: product.isPreOrder === true,
+        i_preorderprice: product.preOrderPrice ?? null,
       }));
 
       const pagination: PaginationData = {

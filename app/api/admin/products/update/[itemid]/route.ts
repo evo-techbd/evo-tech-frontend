@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import axiosIntercept from "@/utils/axios/axiosIntercept";
 import { isAxiosError } from 'axios';
 import axiosErrorLogger from '@/components/error/axios_error';
@@ -81,6 +82,9 @@ export async function POST(
         );
 
         const data = backendRes.data;
+
+        // Purge cached storefront pages so price / Group Buy changes show immediately
+        revalidatePath("/", "layout");
         
         // Transform response back to frontend format if needed
         if (data.data) {

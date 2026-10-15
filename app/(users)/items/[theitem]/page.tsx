@@ -4,6 +4,7 @@ import EvoBreadcrumbs from "@/components/ui/evo_breadcrumbs";
 import ItemInteractivePart from "./item-interactive-part";
 import ItemSections from "./item-sections";
 import { currencyFormatBDT } from "@/lib/all_utils";
+import { getDisplayPricing } from "@/utils/product-pricing";
 import StarRating from "@/components/star-rating";
 import { Metadata } from "next";
 import { currentRouteProps } from "@/utils/types_interfaces/shared_types";
@@ -209,6 +210,8 @@ const fetchItemData = async (itemSlugHere: string) => {
     i_price: product.price,
     i_prevprice: product.previousPrice || 0,
     i_preorderprice: product.preOrderPrice || null,
+    i_ispreorder: product.isPreOrder === true,
+    i_preorderdate: product.preOrderDate || null,
     i_stock: hasStockCount ? normalizedStock : null,
     i_lowstockthreshold: hasLowStockThreshold
       ? normalizedLowStockThreshold
@@ -271,6 +274,20 @@ const IndividualItem = async ({ params }: currentRouteProps) => {
     );
   }
 
+  const pricing = getDisplayPricing({
+    price: itemInfo.i_price,
+    previousPrice: itemInfo.i_prevprice,
+    preOrderPrice: itemInfo.i_preorderprice,
+    isPreOrder: itemInfo.i_ispreorder,
+  });
+  const groupBuyDate = itemInfo.i_preorderdate
+    ? new Date(itemInfo.i_preorderdate).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   const breadcrumbData: BreadCrumbItems[] = [
     {
       content: <span>Home</span>,
@@ -293,6 +310,7 @@ const IndividualItem = async ({ params }: currentRouteProps) => {
     sku: itemInfo.itemid,
     brand: itemInfo.i_brand || "Evo-Tech Bangladesh",
     inStock: itemInfo.i_instock,
+    preOrder: pricing.isGroupBuy,
     url: `${baseUrl}/items/${itemInfo.i_slug}`,
     rating: itemInfo.i_rating,
     reviewCount: itemInfo.i_reviews,
@@ -328,31 +346,33 @@ const IndividualItem = async ({ params }: currentRouteProps) => {
 
               <div className="flex flex-wrap justify-between w-full h-fit gap-x-8 gap-y-2 min-[1320px]:pr-10">
                 <div className="flex flex-col w-fit h-fit gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[16px] md:text-[18px] leading-6 font-[600] tracking-tight">
-                      Regular Price:
+                  <div
+                    className={`flex flex-wrap items-center gap-2 ${
+                      pricing.isGroupBuy
+                        ? "px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-md"
+                        : ""
+                    }`}
+                  >
+                    <span
+                      className={`text-[16px] md:text-[18px] leading-6 font-[600] tracking-tight ${
+                        pricing.isGroupBuy ? "text-brand-700" : ""
+                      }`}
+                    >
+                      {pricing.isGroupBuy ? "Group Buy Price:" : "Regular Price:"}
                     </span>
-                    <span className="text-[16px] md:text-[18px] leading-6 font-[600] tracking-tight">{`BDT ${currencyFormatBDT(
-                      itemInfo.i_price,
-                    )}`}</span>
-                    {currencyFormatBDT(itemInfo.i_prevprice) !==
-                      currencyFormatBDT(0) && (
-                        <span className="text-[13px] md:text-[14px] leading-6 font-[500] tracking-tight line-through text-[#a19d9a]">
-                          {currencyFormatBDT(itemInfo.i_prevprice)}
-                        </span>
-                      )}
-                  </div>
-                  {itemInfo.i_preorderprice &&
-                    itemInfo.i_preorderprice < itemInfo.i_price && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-md">
-                        <span className="text-[13px] md:text-[14px] leading-5 font-[500] text-brand-700">
-                          Group Buy Price:
-                        </span>
-                        <span className="text-[15px] md:text-[16px] leading-5 font-[700] text-brand-600">{`BDT ${currencyFormatBDT(
-                          itemInfo.i_preorderprice,
-                        )}`}</span>
-                      </div>
+                    <span
+                      className={`text-[16px] md:text-[18px] leading-6 tracking-tight ${
+                        pricing.isGroupBuy
+                          ? "font-[700] text-brand-600"
+                          : "font-[600]"
+                      }`}
+                    >{`BDT ${currencyFormatBDT(pricing.currentPrice)}`}</span>
+                    {pricing.strikePrice !== null && (
+                      <span className="text-[13px] md:text-[14px] leading-6 font-[500] tracking-tight line-through text-[#a19d9a]">
+                        {`BDT ${currencyFormatBDT(pricing.strikePrice)}`}
+                      </span>
                     )}
+                  </div>
                 </div>
                 <div className="flex items-center w-fit h-fit gap-1">
                   <StarRating rating={itemInfo.i_rating} />
@@ -363,11 +383,21 @@ const IndividualItem = async ({ params }: currentRouteProps) => {
               <div className="flex items-center w-full h-fit gap-2">
                 <p className="w-fit text-[12px] md:text-[13px] leading-5 font-[500] text-stone-600">
                   {`Status: `}
-                  <span
-                    className={`w-fit h-fit ${itemInfo.i_instock ? "text-emerald-500" : "text-red-400"
-                      }`}
-                  >{`${itemInfo.i_instock ? "In Stock" : "Out of Stock"
-                    }`}</span>
+                  {/* Group Buy is a pre-order, so no stock yet isn't "Out of Stock" */}
+                  {pricing.isGroupBuy && !itemInfo.i_instock ? (
+                    <span className="w-fit h-fit text-brand-600">
+                      Pre-order (Group Buy)
+                    </span>
+                  ) : (
+                    <span
+                      className={`w-fit h-fit ${itemInfo.i_instock ? "text-emerald-500" : "text-red-400"
+                        }`}
+                    >{`${itemInfo.i_instock ? "In Stock" : "Out of Stock"
+                      }`}</span>
+                  )}
+                  {pricing.isGroupBuy && groupBuyDate && (
+                    <span className="text-stone-500">{` · Group Buy available from ${groupBuyDate}`}</span>
+                  )}
                 </p>
               </div>
 

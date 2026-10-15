@@ -59,6 +59,8 @@ const FeaturedSectionsRenderer = async () => {
              price: p.price,
              prevPrice: p.previousPrice,
              preOrderPrice: p.preOrderPrice || null,
+             isPreOrder: p.isPreOrder === true,
+             inStock: p.inStock,
              image: p.mainImage,
              rating: 0 
         }));

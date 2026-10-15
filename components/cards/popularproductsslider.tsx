@@ -12,6 +12,7 @@ import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
 import { ExternalLink } from "lucide-react";
+import { getDisplayPricing } from "@/utils/product-pricing";
 
 const PopularProductsSlider = ({
   title = "Popular In Category",
@@ -45,6 +46,7 @@ const PopularProductsSlider = ({
           price: p.price,
           prevPrice: p.previousPrice || p.previous_price || 0,
           preOrderPrice: p.preOrderPrice || p.pre_order_price || null,
+          isPreOrder: p.isPreOrder === true,
           image:
             p.mainImage || p.main_image || "/assets/placeholder-product.svg",
           rating: p.rating || 0,
@@ -155,20 +157,30 @@ const PopularProductsSlider = ({
                   {p.name}
                 </h4>
                 <div className="flex items-center gap-2">
-                  {p.preOrderPrice && p.preOrderPrice < p.price ? (
-                    <>
-                      <div className="text-sm font-semibold text-cyan-600">
-                        BDT {p.preOrderPrice?.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-red-500 line-through">
-                        BDT {p.price?.toLocaleString()}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-sm font-semibold text-stone-900">
-                      BDT {p.price?.toLocaleString()}
-                    </div>
-                  )}
+                  {(() => {
+                    const pricing = getDisplayPricing({
+                      price: p.price,
+                      previousPrice: p.prevPrice,
+                      preOrderPrice: p.preOrderPrice,
+                      isPreOrder: p.isPreOrder,
+                    });
+                    return (
+                      <>
+                        <div
+                          className={`text-sm font-semibold ${
+                            pricing.isGroupBuy ? "text-cyan-600" : "text-stone-900"
+                          }`}
+                        >
+                          BDT {pricing.currentPrice.toLocaleString()}
+                        </div>
+                        {pricing.strikePrice !== null && (
+                          <div className="text-sm text-red-500 line-through">
+                            BDT {pricing.strikePrice.toLocaleString()}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </Link>

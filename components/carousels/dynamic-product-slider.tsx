@@ -10,6 +10,7 @@ import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
 import { ExternalLink } from "lucide-react";
+import { getDisplayPricing } from "@/utils/product-pricing";
 
 interface Product {
   id: string;
@@ -18,6 +19,7 @@ interface Product {
   price: number;
   prevPrice?: number;
   preOrderPrice?: number;
+  isPreOrder?: boolean;
   image: string;
   rating?: number;
   inStock?: boolean;
@@ -76,7 +78,14 @@ const DynamicProductSlider = ({
           loop={products.length > 4}
           className="products-swiper"
         >
-          {products.map((product) => (
+          {products.map((product) => {
+            const pricing = getDisplayPricing({
+              price: product.price,
+              previousPrice: product.prevPrice,
+              preOrderPrice: product.preOrderPrice,
+              isPreOrder: product.isPreOrder,
+            });
+            return (
             <SwiperSlide key={product.id}>
               <Link
                 href={`/items/${product.slug}`}
@@ -93,7 +102,7 @@ const DynamicProductSlider = ({
                   />
 
                   {/* Out of Stock Overlay */}
-                  {product.inStock === false && (
+                  {product.inStock === false && !pricing.isGroupBuy && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
                       <span className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg">
                         Out of Stock
@@ -109,34 +118,26 @@ const DynamicProductSlider = ({
                   </h3>
 
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    {product.preOrderPrice &&
-                    product.preOrderPrice < product.price ? (
-                      <>
-                        <span className="text-[13px] font-semibold text-cyan-600">
-                          BDT {product.preOrderPrice.toLocaleString()}
-                        </span>
-                        <span className="text-xs sm:text-sm text-red-500 line-through">
-                          BDT {product.price.toLocaleString()}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-[13px] font-medium text-stone-800">
-                          BDT {product.price.toLocaleString()}
-                        </span>
-                        {product.prevPrice &&
-                        product.prevPrice > product.price ? (
-                          <span className="text-xs sm:text-sm text-red-500 line-through">
-                            BDT{product.prevPrice.toLocaleString()}
-                          </span>
-                        ) : null}
-                      </>
+                    <span
+                      className={`text-[13px] ${
+                        pricing.isGroupBuy
+                          ? "font-semibold text-cyan-600"
+                          : "font-medium text-stone-800"
+                      }`}
+                    >
+                      BDT {pricing.currentPrice.toLocaleString()}
+                    </span>
+                    {pricing.strikePrice !== null && (
+                      <span className="text-xs sm:text-sm text-red-500 line-through">
+                        BDT {pricing.strikePrice.toLocaleString()}
+                      </span>
                     )}
                   </div>
                 </div>
               </Link>
             </SwiperSlide>
-          ))}
+            );
+          })}
         </Swiper>
       </div>
     </section>

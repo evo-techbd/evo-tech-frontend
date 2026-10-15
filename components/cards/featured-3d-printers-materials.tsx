@@ -9,6 +9,7 @@ import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink } from "lucide-react";
+import { isGroupBuyActive } from "@/utils/product-pricing";
 
 interface Product {
   _id: string;
@@ -170,7 +171,7 @@ export default function Featured3DPrintersMaterials() {
                       />
 
                       {/* Out of Stock Overlay */}
-                      {!product.inStock && (
+                      {!product.inStock && !isGroupBuyActive(product) && (
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
                           <span className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg">
                             Out of Stock
@@ -186,10 +187,10 @@ export default function Featured3DPrintersMaterials() {
                       </h3>
 
                       <div className="flex flex-col gap-1">
-                        {(product as any).preOrderPrice && (product as any).isPreOrder && (product as any).preOrderPrice < product.price ? (
+                        {isGroupBuyActive(product) ? (
                           <>
                             <span className="text-sm font-semibold text-cyan-600">
-                              BDT {(product as any).preOrderPrice.toLocaleString()}
+                              BDT {product.preOrderPrice!.toLocaleString()}
                             </span>
                             <span className="text-sm text-red-500 line-through">
                               BDT {product.price.toLocaleString()}

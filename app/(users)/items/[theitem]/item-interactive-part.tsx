@@ -13,6 +13,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { setCartData } from "@/store/slices/cartslice";
 import type { CartItem } from "@/schemas/cartSchema";
 import axios from "@/utils/axios/axios";
+import { getDisplayPricing } from "@/utils/product-pricing";
 
 const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   const searchParams = useSearchParams();
@@ -27,6 +28,12 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     singleitem.i_colorVariations || []
   );
   const [selectedColor, setSelectedColor] = useState<string>(searchParams.get("color") || "");
+  const groupBuyPricing = getDisplayPricing({
+    price: singleitem.i_price,
+    previousPrice: singleitem.i_prevprice,
+    preOrderPrice: singleitem.i_preorderprice,
+    isPreOrder: singleitem.i_ispreorder,
+  });
 
   // Sync selected color with URL param when it changes (e.g., browser back/forward)
   useEffect(() => {
@@ -92,7 +99,9 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   };
 
   const qtyIncrement = () => {
-    const max = maxStock;
+    // Group Buy is a pre-order, so the shared quantity picker isn't capped by
+    // current stock; regular purchases re-check maxStock when clicked.
+    const max = groupBuyPricing.isGroupBuy ? null : maxStock;
     const current = Number(itemQuantity);
     if (max !== null && current >= max) {
       toast.error(`Only ${max} units available`);
@@ -331,6 +340,13 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
       return;
     }
 
+    // Regular purchase — capped by current stock (Group Buy has its own button)
+    if (maxStock !== null && Number(itemQuantity) > maxStock) {
+      toast.error(`Only ${maxStock} units available in stock`);
+      setItemQuantity(maxStock);
+      return;
+    }
+
     // Get current cart from Redux/localStorage
     const currentCart = cartItems || [];
 
@@ -391,6 +407,11 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   };
 
   const handlePreOrder = () => {
+    if (!groupBuyPricing.isGroupBuy) {
+      toast.error("Group Buy is not available for this product right now");
+      return;
+    }
+
     // Validate color selection if product has color variations
     const hasColorVariations =
       realTimeColorVariations && realTimeColorVariations.length > 0;
@@ -439,8 +460,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
     // Get current cart from Redux/localStorage
     const currentCart = cartItems || [];
 
-    // Use pre-order price if available
-    const itemPrice = singleitem.i_preorderprice || singleitem.i_price;
+    const itemPrice = groupBuyPricing.currentPrice;
 
     // Check if item already exists in cart
     const existingItemIndex = currentCart.findIndex(
@@ -508,9 +528,9 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
   // Determine the effective max stock for quantity cap
   // - For color-variant products: use the selected color variation's stock
   // - For simple products: use root i_stock
-  // - For pre-order items: no cap (null)
+  // Group Buy lines are not stock-capped, but they go through handlePreOrder,
+  // which never reads maxStock — regular purchases are always capped.
   const maxStock: number | null = (() => {
-    if (singleitem.i_ispreorder) return null; // pre-orders are not stock-capped
     if (hasColorVariations && itemColorfromURL) {
       const variation = realTimeColorVariations.find(
         (cv: any) => cv.colorName.toLowerCase() === itemColorfromURL.toLowerCase()
@@ -603,7 +623,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
         <div className="flex w-full h-fit gap-2">
           <button
             onClick={handleBuyNow}
-            disabled={!singleitem.i_instock && !singleitem.i_ispreorder}
+            disabled={!singleitem.i_instock}
             type="button"
             aria-label="buy now button"
             className="w-full h-fit px-6 py-2 border border-stone-600 rounded-[4px] text-[12px] md:text-[14px] leading-5 tracking-tight font-[500] text-stone-100 bg-stone-900 disabled:bg-stone-700 disabled:hover:bg-stone-700 hover:bg-stone-800 transition-colors duration-100 ease-linear"
@@ -612,7 +632,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
           </button>
           <button
             onClick={handleAddToCart}
-            disabled={!singleitem.i_instock && !singleitem.i_ispreorder}
+            disabled={!singleitem.i_instock}
             type="button"
             aria-label="add to cart button"
             className="w-full h-fit px-6 py-2 border border-stone-600 rounded-[4px] text-[12px] md:text-[14px] leading-5 tracking-tight font-[500] text-stone-900 hover:text-stone-100 hover:bg-stone-900 disabled:hover:text-stone-900 disabled:hover:bg-transparent transition-colors duration-100 ease-linear"
@@ -621,8 +641,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
           </button>
         </div>
 
-        {singleitem.i_preorderprice &&
-          singleitem.i_preorderprice < singleitem.i_price && (
+        {groupBuyPricing.isGroupBuy && (
             <button
               onClick={() => handlePreOrder()}
               type="button"
@@ -630,7 +649,7 @@ const ItemInteractivePart = ({ singleitem }: { singleitem: any }) => {
               className="w-full h-fit px-6 py-2.5 border-2 border-brand-500 rounded-[4px] text-[12px] md:text-[14px] leading-5 tracking-tight font-[600] text-white bg-brand-600 disabled:bg-brand-300 disabled:hover:bg-brand-300 hover:bg-brand-700 transition-colors duration-100 ease-linear shadow-sm"
             >
               Group Buy Now - Save BDT{" "}
-              {(singleitem.i_price - singleitem.i_preorderprice).toFixed(0)}
+              {(singleitem.i_price - groupBuyPricing.currentPrice).toFixed(0)}
             </button>
           )}
       </div>

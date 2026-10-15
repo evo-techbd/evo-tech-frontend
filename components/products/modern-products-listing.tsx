@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { setCartData } from "@/store/slices/cartslice";
 import { RootState, AppDispatch } from "@/store/store";
+import { getDisplayPricing } from "@/utils/product-pricing";
 
 interface ModernProductsListingProps {
   fetchedProdData: any[];
@@ -223,10 +224,18 @@ const ProductGridCard = ({ product }: { product: any }) => {
     (state: RootState) => state.shoppingcart.cartdata,
   );
 
+  const pricing = getDisplayPricing({
+    price: product.i_price,
+    previousPrice: product.i_prevprice,
+    preOrderPrice: product.i_preorderprice,
+    isPreOrder: product.i_ispreorder,
+  });
+
   const discount =
-    product.i_prevprice > product.i_price
+    pricing.strikePrice !== null
       ? Math.round(
-          ((product.i_prevprice - product.i_price) / product.i_prevprice) * 100,
+          ((pricing.strikePrice - pricing.currentPrice) / pricing.strikePrice) *
+            100,
         )
       : 0;
 
@@ -239,16 +248,16 @@ const ProductGridCard = ({ product }: { product: any }) => {
       ? JSON.parse(localevoFrontCart)
       : { items: [], ctoken: "" };
 
-    const existingItemIndex = parsedCart.items.findIndex(
-      (item: any) => item.item_id === product.itemid && item.item_color === "",
-    );
+    // Group Buy items go in at the full Group Buy price (deposit is split at checkout)
+    const isPreOrder = pricing.isGroupBuy;
+    const itemPrice = pricing.currentPrice;
 
-    // Determine if item is pre-order and get appropriate price (full price, not 50%)
-    const isPreOrder =
-      product.i_ispreorder &&
-      product.i_preorderprice &&
-      product.i_preorderprice < product.i_price;
-    const itemPrice = isPreOrder ? product.i_preorderprice : product.i_price;
+    const existingItemIndex = parsedCart.items.findIndex(
+      (item: any) =>
+        item.item_id === product.itemid &&
+        item.item_color === "" &&
+        (item.item_isPreOrder ?? false) === isPreOrder,
+    );
 
     let updatedCart;
     if (existingItemIndex >= 0) {
@@ -337,7 +346,7 @@ const ProductGridCard = ({ product }: { product: any }) => {
               -{discount}%
             </span>
           )}
-          {!product.i_instock && (
+          {!product.i_instock && !pricing.isGroupBuy && (
             <span className="px-1.5 py-0.5 bg-stone-800 text-white text-[10px] font-bold rounded">
               Out of Stock
             </span>
@@ -393,48 +402,19 @@ const ProductGridCard = ({ product }: { product: any }) => {
         {/* Price */}
         <div className="flex flex-col gap-0.5 mt-auto mb-1">
           <div className="flex flex-row items-baseline gap-1.5 sm:gap-2 flex-wrap">
-            {/* <span className="text-sm sm:text-base font-bold text-stone-900">
-              {product.i_preorderprice &&
-              product.i_ispreorder &&
-              product.i_preorderprice < product.i_price
-                ? `৳${product.i_preorderprice.toLocaleString()}`
-                : `৳${product.i_price.toLocaleString()}`}
+            <span
+              className={`text-[13px] ${
+                pricing.isGroupBuy
+                  ? "font-semibold text-cyan-600"
+                  : "font-medium text-stone-800"
+              }`}
+            >
+              BDT {pricing.currentPrice.toLocaleString()}
             </span>
-            {product.i_preorderprice &&
-            product.i_ispreorder &&
-            product.i_preorderprice < product.i_price
-              ? product.i_prevprice > product.i_preorderprice && (
-                  <span className="text-xs font-bold text-red-500 line-through">
-                    ৳{product.i_prevprice.toLocaleString()}
-                  </span>
-                )
-              : product.i_prevprice > product.i_price && (
-                  <span className="text-xs font-bold text-red-500 line-through">
-                    ৳{product.i_prevprice.toLocaleString()}
-                  </span>
-                )} */}
-            {product.i_preorderprice &&
-            product.i_preorderprice < product.i_price ? (
-              <>
-                <span className="text-[13px] font-semibold text-cyan-600">
-                  BDT {product.i_preorderprice.toLocaleString()}
-                </span>
-                <span className="text-xs sm:text-sm text-red-500 line-through">
-                  BDT {product.i_price.toLocaleString()}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-[13px] font-medium text-stone-800">
-                  BDT {product.i_price.toLocaleString()}
-                </span>
-                {product.i_prevprice &&
-                product.i_prevprice > product.i_price ? (
-                  <span className="text-xs sm:text-sm text-red-500 line-through">
-                    BDT{product.i_prevprice.toLocaleString()}
-                  </span>
-                ) : null}
-              </>
+            {pricing.strikePrice !== null && (
+              <span className="text-xs sm:text-sm text-red-500 line-through">
+                BDT {pricing.strikePrice.toLocaleString()}
+              </span>
             )}
           </div>
         </div>
@@ -473,10 +453,18 @@ const ProductListCard = ({ product }: { product: any }) => {
     (state: RootState) => state.shoppingcart.cartdata,
   );
 
+  const pricing = getDisplayPricing({
+    price: product.i_price,
+    previousPrice: product.i_prevprice,
+    preOrderPrice: product.i_preorderprice,
+    isPreOrder: product.i_ispreorder,
+  });
+
   const discount =
-    product.i_prevprice > product.i_price
+    pricing.strikePrice !== null
       ? Math.round(
-          ((product.i_prevprice - product.i_price) / product.i_prevprice) * 100,
+          ((pricing.strikePrice - pricing.currentPrice) / pricing.strikePrice) *
+            100,
         )
       : 0;
 
@@ -489,16 +477,16 @@ const ProductListCard = ({ product }: { product: any }) => {
       ? JSON.parse(localevoFrontCart)
       : { items: [], ctoken: "" };
 
-    const existingItemIndex = parsedCart.items.findIndex(
-      (item: any) => item.item_id === product.itemid && item.item_color === "",
-    );
+    // Group Buy items go in at the full Group Buy price (deposit is split at checkout)
+    const isPreOrder = pricing.isGroupBuy;
+    const itemPrice = pricing.currentPrice;
 
-    // Determine if item is pre-order and get appropriate price (full price, not 50%)
-    const isPreOrder =
-      product.i_ispreorder &&
-      product.i_preorderprice &&
-      product.i_preorderprice < product.i_price;
-    const itemPrice = isPreOrder ? product.i_preorderprice : product.i_price;
+    const existingItemIndex = parsedCart.items.findIndex(
+      (item: any) =>
+        item.item_id === product.itemid &&
+        item.item_color === "" &&
+        (item.item_isPreOrder ?? false) === isPreOrder,
+    );
 
     let updatedCart;
     if (existingItemIndex >= 0) {
@@ -575,9 +563,7 @@ const ProductListCard = ({ product }: { product: any }) => {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.i_ispreorder &&
-            product.i_preorderprice &&
-            product.i_preorderprice < product.i_price && (
+          {pricing.isGroupBuy && (
               <span className="px-2 py-1 bg-cyan-600 text-white text-xs font-bold rounded-md">
                 Group Buy
               </span>
@@ -587,7 +573,7 @@ const ProductListCard = ({ product }: { product: any }) => {
               -{discount}%
             </span>
           )}
-          {!product.i_instock && (
+          {!product.i_instock && !pricing.isGroupBuy && (
             <span className="px-2 py-1 bg-stone-800 text-white text-xs font-bold rounded-md">
               Out of Stock
             </span>
@@ -638,25 +624,13 @@ const ProductListCard = ({ product }: { product: any }) => {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-2xl font-bold text-stone-900">
-                {product.i_preorderprice &&
-                product.i_ispreorder &&
-                product.i_preorderprice < product.i_price
-                  ? `৳${product.i_preorderprice.toLocaleString()}`
-                  : `৳${product.i_price.toLocaleString()}`}
+                ৳{pricing.currentPrice.toLocaleString()}
               </span>
-              {product.i_preorderprice &&
-              product.i_ispreorder &&
-              product.i_preorderprice < product.i_price
-                ? product.i_prevprice > product.i_preorderprice && (
-                    <span className="text-2xl font-bold text-stone-400 line-through">
-                      ৳{product.i_prevprice.toLocaleString()}
-                    </span>
-                  )
-                : product.i_prevprice > product.i_price && (
-                    <span className="text-2xl font-bold text-stone-400 line-through">
-                      ৳{product.i_prevprice.toLocaleString()}
-                    </span>
-                  )}
+              {pricing.strikePrice !== null && (
+                <span className="text-2xl font-bold text-stone-400 line-through">
+                  ৳{pricing.strikePrice.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
 

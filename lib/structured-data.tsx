@@ -9,6 +9,7 @@ export interface Product {
   sku?: string;
   brand?: string;
   inStock?: boolean;
+  preOrder?: boolean; // Group Buy open — orderable before stock arrives
   url: string;
   rating?: number;
   reviewCount?: number;
@@ -53,7 +54,9 @@ export function generateProductSchema(product: Product) {
       priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
       availability: product.inStock
         ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+        : product.preOrder
+          ? 'https://schema.org/PreOrder'
+          : 'https://schema.org/OutOfStock',
       seller: {
         '@type': 'Organization',
         name: 'Evo-Tech Bangladesh',

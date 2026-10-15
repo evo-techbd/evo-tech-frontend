@@ -486,5 +486,7 @@ export type ProductDisplayType = {
   i_subcategory?: string;
   i_brand: string;
   i_published: boolean;
+  i_ispreorder?: boolean;
+  i_preorderprice?: number | null;
   i_faq?: { question: string; answer: string }[];
 };

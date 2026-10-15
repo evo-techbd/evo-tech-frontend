@@ -4,12 +4,12 @@ import * as React from "react";
 import type { Row } from "@tanstack/react-table";
 import { ProductDisplayType } from "@/schemas/admin/product/productschemas";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye } from "lucide-react";
+import { Edit, Eye, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from '@/store/store';
-import { removeAProduct } from "@/store/slices/productSlice";
-import { deleteItem } from "@/actions/admin/products";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from '@/store/store';
+import { removeAProduct, updateProductGroupBuyState } from "@/store/slices/productSlice";
+import { deleteItem, setItemGroupBuy } from "@/actions/admin/products";
 import { toast } from "sonner";
 import { DeleteDialog } from "@/components/dialogs/delete-dialog";
 import { ProductDetailsModal } from "./product-details-modal";
@@ -24,8 +24,32 @@ const ProductTableRowActions = ({ row }: RowActionProps) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [isDeletePending, startDeleteTransition] = React.useTransition();
     const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
+    const [isGroupBuyPending, startGroupBuyTransition] = React.useTransition();
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
+    const isGroupBuyOn = useSelector((state: RootState) =>
+        state.products.groupBuyStates[row.original.itemid] ?? Boolean(row.original.i_ispreorder)
+    );
+
+    // Not optimistic: the switch only flips once the backend has saved it and
+    // the storefront cache has been purged, so admin and site never disagree.
+    const handleGroupBuyToggle = () => {
+        const nextValue = !isGroupBuyOn;
+        startGroupBuyTransition(async () => {
+            const result = await setItemGroupBuy(row.original.itemid, nextValue);
+
+            if (!result.success) {
+                toast.error(result.error || "Failed to update Group Buy status");
+                return;
+            }
+
+            dispatch(updateProductGroupBuyState({
+                productId: row.original.itemid,
+                isPreOrder: result.isPreOrder!,
+            }));
+            toast.success(`Group Buy turned ${result.isPreOrder ? "on" : "off"}`);
+        });
+    };
 
 
     const handleProductsUpdateAfterDeletion = () => {
@@ -76,6 +100,21 @@ const ProductTableRowActions = ({ row }: RowActionProps) => {
                 onClick={() => router.push(`/control/products/update/${row.original.i_slug}`)}
             >
                 <Edit className="h-4 w-4" />
+            </Button>
+
+            <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 rounded-full ${isGroupBuyOn
+                    ? "bg-cyan-600 text-white hover:bg-cyan-700 hover:text-white"
+                    : "bg-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-600"}`}
+                aria-label={`Turn Group Buy ${isGroupBuyOn ? "off" : "on"} for ${row.original.i_name || 'item'}`}
+                aria-pressed={isGroupBuyOn}
+                title={`Group Buy: ${isGroupBuyOn ? "On" : "Off"} (click to turn ${isGroupBuyOn ? "off" : "on"})`}
+                disabled={isGroupBuyPending}
+                onClick={handleGroupBuyToggle}
+            >
+                <Users className={`h-4 w-4 ${isGroupBuyPending ? "animate-pulse" : ""}`} />
             </Button>
 
             <DeleteDialog<ProductDisplayType>
