@@ -110,7 +110,7 @@ export interface InvoiceLineItem {
 // Everything the shared A5 invoice layout needs. Orders and 3D printing sales
 // both map into this shape, so they print with the exact same design.
 export interface InvoiceData {
-    // shop-style monthly serial (e.g. "09001"); falls back to referenceId
+    // shop-style monthly serial (e.g. "2609001"); falls back to referenceId
     serial?: string;
     referenceLabel: string; // e.g. "Order ID", "Sale ID"
     referenceId: string;
@@ -186,8 +186,8 @@ export async function renderInvoicePDF(data: InvoiceData) {
 
         // Serial number and date are filled in automatically at print time,
         // rather than left blank for handwriting like the paper template.
-        // invoiceSerial is a shop-style "MM" + 3-digit sequence that resets
-        // every month (e.g. "09001"), assigned once per order / printing sale
+        // invoiceSerial is a shop-style "YYMM" + 3-digit sequence that resets
+        // every month (e.g. "2609001"), assigned once per order / printing sale
         // and distinct from the long internal order or sale number.
         const serial = data.serial
             ? sanitizeText(data.serial)
@@ -274,12 +274,11 @@ export async function renderInvoicePDF(data: InvoiceData) {
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(9);
         pdf.setTextColor(...COLORS.text);
-        pdf.text(`SL : ${serial}`, MARGIN, y + 4);
-        pdf.text(`Date : ${printDate}`, pageWidth - MARGIN, y + 4, { align: 'right' });
+        pdf.text(`SL : ${serial}`, pageWidth - MARGIN, y + 4, { align: 'right' });
 
         pdf.setFontSize(7);
         pdf.setTextColor(...COLORS.muted);
-        pdf.text(`${data.referenceLabel} : ${sanitizeText(data.referenceId)}`, MARGIN, y + 8);
+        pdf.text(`${data.referenceLabel} : ${sanitizeText(data.referenceId)}`, pageWidth - MARGIN, y + 8, { align: 'right' });
 
         const logoWidth = 44;
         const logoHeight = logoWidth / LOGO_ASPECT;
@@ -295,11 +294,17 @@ export async function renderInvoicePDF(data: InvoiceData) {
 
         y = logoTop + logoHeight + 3.3;
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(7.6);
         pdf.setTextColor(...COLORS.muted);
-        pdf.text(`${COMPANY.phone}      |      ${COMPANY.website}`, pageWidth / 2, y, { align: 'center' });
-        y += 3.8;
-        pdf.text(COMPANY.address, pageWidth / 2, y, { align: 'center' });
+        // phone, website and address share one line; shrink the font if
+        // needed so it never wraps
+        const companyLine = `${COMPANY.phone}    |    ${COMPANY.website}    |    ${COMPANY.address}`;
+        let companyFontSize = 7.6;
+        pdf.setFontSize(companyFontSize);
+        while (pdf.getTextWidth(companyLine) > CONTENT_W && companyFontSize > 5) {
+            companyFontSize -= 0.2;
+            pdf.setFontSize(companyFontSize);
+        }
+        pdf.text(companyLine, pageWidth / 2, y, { align: 'center' });
 
         y += 2.8;
         pdf.setDrawColor(...COLORS.strongLine);
@@ -312,6 +317,16 @@ export async function renderInvoicePDF(data: InvoiceData) {
         pdf.setFontSize(10.5);
         pdf.setTextColor(...COLORS.text);
         pdf.text('Customer Information-', MARGIN, y);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.text(`Date : ${printDate}`, pageWidth - MARGIN, y, { align: 'right' });
+
+        // black rule under each filled-in field, like the printed invoice pad
+        const drawFieldLine = (fromX: number, toX: number, baselineY: number): void => {
+            pdf.setDrawColor(...COLORS.strongLine);
+            pdf.setLineWidth(0.2);
+            pdf.line(fromX, baselineY + 1.2, toX, baselineY + 1.2);
+        };
 
         y += 5.7;
         pdf.setFontSize(8.5);
@@ -322,13 +337,16 @@ export async function renderInvoicePDF(data: InvoiceData) {
         pdf.setFont('helvetica', 'normal');
         pdf.text(sanitizeText(data.customerName), MARGIN + 12, y);
         pdf.text(sanitizeText(data.phone), rightColX + 12, y);
+        drawFieldLine(MARGIN + 11, rightColX - 3, y);
+        drawFieldLine(rightColX + 11, pageWidth - MARGIN, y);
 
         y += 5.7;
         pdf.setFont('helvetica', 'bold');
         pdf.text('Address :', MARGIN, y);
         pdf.setFont('helvetica', 'normal');
-        const addressLines = pdf.splitTextToSize(sanitizeText(data.address), CONTENT_W - 20);
+        const addressLines: string[] = pdf.splitTextToSize(sanitizeText(data.address), CONTENT_W - 20);
         pdf.text(addressLines, MARGIN + 18, y);
+        addressLines.forEach((_, i) => drawFieldLine(MARGIN + 17, pageWidth - MARGIN, y + i * 4.3));
         y += addressLines.length * 4.3;
 
         // ---------- ITEMS TABLE ----------

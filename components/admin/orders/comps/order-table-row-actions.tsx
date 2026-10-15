@@ -11,8 +11,6 @@ import { removeAnOrder } from "@/store/slices/orderSlice";
 import { DeleteDialog } from "@/components/dialogs/delete-dialog";
 import { toast } from "sonner";
 import { deleteOrder } from "@/actions/admin/orders";
-import { updateOrderStatus } from "@/actions/admin/update-order-status";
-import { usePendingOrders } from "@/contexts/PendingOrdersContext";
 import { generateInvoicePDF } from "./generate-invoice-pdf";
 import { generateShippingLabel } from "./generate-shipping-label";
 import { OrderDetailsModal } from "./order-details-modal";
@@ -88,34 +86,17 @@ const OrderTableRowActions = ({ row, onDataChange, archiveMode }: RowActionProps
         }
     };
 
-    const handleCancel = () => {
-        const order = row.original;
-        if (!order) return toast.error('Order not found');
-
-        if (order.orderStatus === 'cancelled') {
-            return toast.error('Order is already cancelled');
-        }
-
-        // simple confirmation dialog
-        const confirmed = window.confirm('Are you sure you want to cancel this order? This action will mark the order as cancelled.');
-        if (!confirmed) return;
-
-        startDeleteTransition(async () => {
-            const { data, error } = await updateOrderStatus({
-                id: order._id || order.orderNumber,
-                payload: { orderStatus: 'cancelled' }
-            });
-
-            if (error) {
-                toast.error(error || 'Failed to cancel order');
-                return;
-            }
-
-            toast.success(data?.message || 'Order cancelled');
-            // trigger table/pagination refresh
-            if (onDataChange) await onDataChange();
-        });
-    };
+    // Whole calendar days between the order date and today (0 = placed today)
+    const daysSincePlaced = React.useMemo(() => {
+        const createdAt = row.original.createdAt;
+        if (!createdAt) return null;
+        const placed = new Date(createdAt);
+        if (isNaN(placed.getTime())) return null;
+        const startOfPlaced = new Date(placed.getFullYear(), placed.getMonth(), placed.getDate()).getTime();
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        return Math.max(0, Math.round((startOfToday - startOfPlaced) / 86_400_000));
+    }, [row.original.createdAt]);
 
     const handlePrintInvoice = async () => {
         const order = row.original;
@@ -205,17 +186,15 @@ const OrderTableRowActions = ({ row, onDataChange, archiveMode }: RowActionProps
                 isDeletePending={isDeletePending}
                 entityName="order"
             />
-            {/* Cancel button - visible only if order not already cancelled and not in the read-only archive */}
-            {!archiveMode && row.original.orderStatus !== 'cancelled' && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 rounded-full bg-yellow-100 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                    aria-label={`Cancel order`}
-                    onClick={handleCancel}
+            {/* Days elapsed since the order was placed */}
+            {daysSincePlaced !== null && (
+                <span
+                    className="h-8 min-w-8 px-1 inline-flex items-center justify-center rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold"
+                    title={`${daysSincePlaced} day${daysSincePlaced === 1 ? "" : "s"} since order was placed`}
+                    aria-label={`${daysSincePlaced} days since order was placed`}
                 >
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h4l3 9 4-18 3 9h4"/></svg>
-                </Button>
+                    {daysSincePlaced}
+                </span>
             )}
         </div>
     );
