@@ -74,8 +74,6 @@ const ColorSelector = memo(({ colors, selectedColor, onColorSelect }: ColorSelec
         return typeof coloroption.stock === 'number' && coloroption.stock <= 0;
     };
 
-    const hasOutOfStockColor = parsedColors.some(isOutOfStock);
-
     return (
         <div className="flex flex-col w-full h-fit gap-2">
             <div className="flex flex-wrap items-start w-full h-fit gap-4">
@@ -86,40 +84,36 @@ const ColorSelector = memo(({ colors, selectedColor, onColorSelect }: ColorSelec
                     return (
                         <div
                             key={`color_${idx}`}
-                            className="flex flex-col items-center gap-1.5 cursor-pointer"
+                            className="group relative flex flex-col items-center gap-1.5 cursor-pointer"
                             onClick={() => handleColorClick(coloroption)}
                         >
+                            {outOfStock && (
+                                <span className="absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-medium text-white shadow-sm opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100">
+                                    Out of stock
+                                </span>
+                            )}
                             <div
-                                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer border-2 border-white ring-2 transition-all duration-200 ${outOfStock
-                                        ? `ring-red-400 opacity-50${selected ? ' ring-offset-2' : ''}`
+                                className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full cursor-pointer border-2 border-white ring-2 transition-all duration-200 ${outOfStock
+                                        ? `ring-red-500${selected ? ' ring-offset-2' : ''}`
                                         : selected
                                             ? 'ring-brand-600 ring-offset-2 scale-110'
                                             : 'ring-stone-300 hover:ring-stone-400'
                                     }`}
-                                style={{ backgroundColor: coloroption.hex }}
-                            >
+                                style={{ backgroundColor: coloroption.hex }}                            >
+                                {outOfStock && (
+                                    <span className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+                                        <span className="absolute top-1/2 left-1/2 w-[140%] h-0.5 bg-red-500 -translate-x-1/2 -translate-y-1/2 -rotate-45"></span>
+                                    </span>
+                                )}
                             </div>
                             <span className={`text-[10px] sm:text-[11px] font-medium capitalize max-w-[60px] text-center leading-tight ${outOfStock ? 'text-red-500' : selected ? 'text-brand-700' : 'text-stone-600'
                                 }`}>
                                 {coloroption.name}
                             </span>
-                            {outOfStock && (
-                                <span className="text-[9px] leading-tight text-red-500">
-                                    Out of stock
-                                </span>
-                            )}
                         </div>
                     );
                 })}
             </div>
-            {hasOutOfStockColor && (
-                <div className="flex items-center gap-1.5 w-fit h-fit">
-                    <span className="inline-block w-3 h-3 rounded-full ring-2 ring-red-400 opacity-50 bg-stone-200"></span>
-                    <span className="text-[11px] text-stone-500">
-                        Red border means that color is out of stock
-                    </span>
-                </div>
-            )}
         </div>
     );
 });

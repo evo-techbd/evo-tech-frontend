@@ -21,6 +21,11 @@ const adminSidebarMenus = [
                 permissions: ["VIEW_PRODUCTS"],
             },
             {
+                title: "Product Groups",
+                url: "/control/product-groups",
+                permissions: ["VIEW_PRODUCTS"],
+            },
+            {
                 title: "All Categories",
                 url: "/control/categories",
                 permissions: ["MANAGE_CATEGORIES"],
@@ -125,6 +130,16 @@ const adminSecondarySidebarMenus = [
             {
                 title: "Delivery Charge",
                 url: "/control/setup-config/delivery-charge",
+                permissions: ["MANAGE_SITE_SETTINGS"],
+            },
+            {
+                title: "Contact Info",
+                url: "/control/setup-config/contact-info",
+                permissions: ["MANAGE_SITE_SETTINGS"],
+            },
+            {
+                title: "3D Print Calculator",
+                url: "/control/setup-config/3d-print-calculator",
                 permissions: ["MANAGE_SITE_SETTINGS"],
             },
             // {

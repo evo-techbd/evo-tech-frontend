@@ -7,6 +7,8 @@ import { IoChevronDown, IoMailOutline, IoCallOutline, IoLocationOutline } from "
 import { BsFacebook, BsInstagram, BsWhatsapp, BsYoutube } from "react-icons/bs";
 import { BiLogoLinkedin } from "react-icons/bi";
 import { useTaxonomy } from '@/hooks/use-taxonomy';
+import { useContactInfo } from '@/hooks/use-contact-info';
+import { telHref, whatsappHref } from '@/lib/contact-info';
 
 import EvoTechBDLogo from '@/public/assets/EvoTechBD-logo-white.png';
 import VisaCardLogo from '@/public/assets/shared_resources/visa-logo.png';
@@ -18,6 +20,14 @@ import NpsbLogo from '@/public/assets/shared_resources/npsb-logo.png';
 
 const Footer = () => {
     const { categories } = useTaxonomy();
+    const contact = useContactInfo();
+    const socialLinks = [
+        { label: "facebook", href: contact.facebook, Icon: BsFacebook },
+        { label: "instagram", href: contact.instagram, Icon: BsInstagram },
+        { label: "whatsapp", href: contact.whatsapp ? whatsappHref(contact.whatsapp) : "", Icon: BsWhatsapp },
+        { label: "linkedin", href: contact.linkedin, Icon: BiLogoLinkedin },
+        { label: "youtube", href: contact.youtube, Icon: BsYoutube },
+    ].filter((link) => link.href);
 
     const footerPaymentMethods: { id: number; name: string; logo: any; }[] = [
         { id: 1, name: "Visa logo", logo: VisaCardLogo },
@@ -67,14 +77,14 @@ const Footer = () => {
                                 />
                             </div>
 
+                            <a href={`mailto:${contact.email}`} className="relative w-fit max-w-full pl-6 text-[13px] leading-5 tracking-tight font-[400] hover:text-stone-200 transition-colors duration-100 break-all">
+                                <IoMailOutline className="inline w-4 h-4 text-stone-200 absolute top-0.5 left-0" />{contact.email}
+                            </a>
+                            <a href={telHref(contact.phones[0])} className="relative w-fit max-w-full pl-6 text-[13px] leading-5 tracking-tight font-[400] hover:text-stone-200 transition-colors duration-100">
+                                <IoCallOutline className="inline w-4 h-4 text-stone-200 absolute top-0.5 left-0" />{contact.phones[0]}
+                            </a>
                             <p className="relative w-fit max-w-full pl-6 text-[13px] leading-5 tracking-tight font-[400] hover:text-stone-200 transition-colors duration-100">
-                                <IoMailOutline className="inline w-4 h-4 text-stone-200 absolute top-0.5 left-0" />evotech.bd22@gmail.com
-                            </p>
-                            <p className="relative w-fit max-w-full pl-6 text-[13px] leading-5 tracking-tight font-[400] hover:text-stone-200 transition-colors duration-100">
-                                <IoCallOutline className="inline w-4 h-4 text-stone-200 absolute top-0.5 left-0" />+880 1799 424854
-                            </p>
-                            <p className="relative w-fit max-w-full pl-6 text-[13px] leading-5 tracking-tight font-[400] hover:text-stone-200 transition-colors duration-100">
-                                <IoLocationOutline className="inline w-4 h-4 text-stone-200 absolute top-0.5 left-0" />72/A, Matikata Bazar, Dhaka Cantonment, Dhaka-1206, Bangladesh
+                                <IoLocationOutline className="inline w-4 h-4 text-stone-200 absolute top-0.5 left-0" />{contact.address}
                             </p>
                         </div>
 
@@ -151,21 +161,11 @@ const Footer = () => {
 
                 <div className="flex flex-col lg:flex-row-reverse lg:justify-between items-center w-full h-fit py-5 gap-6">
                     <div className="flex w-fit h-fit px-5 text-stone-300 gap-2">
-                        <a href="https://www.facebook.com/EvoTechBD22" target="_blank" rel="noopener noreferrer" aria-label="facebook link" className="flex w-fit h-fit px-2 hover:text-stone-400 transition duration-100 focus:outline-none">
-                            <BsFacebook className="inline w-4 h-4 md:w-5 md:h-5" />
-                        </a>
-                        <a href="#" target="_blank" rel="noopener noreferrer" aria-label="instagram link" className="flex w-fit h-fit px-2 hover:text-stone-400 transition duration-100 focus:outline-none">
-                            <BsInstagram className="inline w-4 h-4 md:w-5 md:h-5" />
-                        </a>
-                        <a href="https://wa.me/+8801799424854/" target="_blank" rel="noopener noreferrer" aria-label="whatsapp link" className="flex w-fit h-fit px-2 hover:text-stone-400 transition duration-100 focus:outline-none">
-                            <BsWhatsapp className="inline w-4 h-4 md:w-5 md:h-5" />
-                        </a>
-                        <a href="#" target="_blank" rel="noopener noreferrer" aria-label="linkedin link" className="flex w-fit h-fit px-2 hover:text-stone-400 transition duration-100 focus:outline-none">
-                            <BiLogoLinkedin className="inline w-4 h-4 md:w-5 md:h-5" />
-                        </a>
-                        <a href="#" target="_blank" rel="noopener noreferrer" aria-label="youtube link" className="flex w-fit h-fit px-2 hover:text-stone-400 transition duration-100 focus:outline-none">
-                            <BsYoutube className="inline w-4 h-4 md:w-5 md:h-5" />
-                        </a>
+                        {socialLinks.map(({ label, href, Icon }) => (
+                            <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`${label} link`} className="flex w-fit h-fit px-2 hover:text-stone-400 transition duration-100 focus:outline-none">
+                                <Icon className="inline w-4 h-4 md:w-5 md:h-5" />
+                            </a>
+                        ))}
                     </div>
 
                     <div className="flex w-fit h-fit gap-1" aria-label="payment-partners">

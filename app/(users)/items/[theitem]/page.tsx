@@ -3,6 +3,7 @@ import { BreadCrumbItems } from "@/utils/types_interfaces/shared_interfaces";
 import EvoBreadcrumbs from "@/components/ui/evo_breadcrumbs";
 import ItemInteractivePart from "./item-interactive-part";
 import ItemSections from "./item-sections";
+import ProductGroupSelector, { ProductGroupData } from "./product-group-selector";
 import { currencyFormatBDT } from "@/lib/all_utils";
 import { getDisplayPricing } from "@/utils/product-pricing";
 import StarRating from "@/components/star-rating";
@@ -171,17 +172,19 @@ const fetchItemData = async (itemSlugHere: string) => {
     typeof normalizedLowStockThreshold === "number" &&
     Number.isFinite(normalizedLowStockThreshold);
 
-  // Fetch feature headers, subsections, specifications, and color variations concurrently with ISR cache
+  // Fetch feature headers, subsections, specifications, color variations, and product group concurrently with ISR cache
   const [
     featureHeadersRes,
     featureSubsectionsRes,
     specificationsRes,
     colorVariationsRes,
+    productGroupRes,
   ] = await Promise.allSettled([
     fetch(`${backendUrl}/products/${product._id}/feature-headers`, fetchOptions),
     fetch(`${backendUrl}/products/${product._id}/feature-subsections`, fetchOptions),
     fetch(`${backendUrl}/products/${product._id}/specifications`, fetchOptions),
     fetch(`${backendUrl}/products/${product._id}/color-variations`, fetchOptions),
+    fetch(`${backendUrl}/product-groups/by-product/${product._id}`, fetchOptions),
   ]);
 
   const extractData = async (resPromise: PromiseSettledResult<Response>) => {
@@ -202,6 +205,15 @@ const fetchItemData = async (itemSlugHere: string) => {
       extractData(specificationsRes),
       extractData(colorVariationsRes)
   ]);
+
+  // null when the product is not in a group
+  let productGroup: ProductGroupData | null = null;
+  if (productGroupRes.status === "fulfilled" && productGroupRes.value.ok) {
+    try {
+      const data = await productGroupRes.value.json();
+      productGroup = data?.data ?? null;
+    } catch (e) {}
+  }
 
   const itemInfo = {
     itemid: product._id,
@@ -243,6 +255,7 @@ const fetchItemData = async (itemSlugHere: string) => {
     i_features: product.features || [],
     i_colors: product.colors || [],
     i_colorVariations: colorVariations,
+    i_group: productGroup,
     i_faq: product.faqs || [],
     i_featurebanner: product.featureBanner || "",
     i_description: product.description || "",
@@ -417,6 +430,13 @@ const IndividualItem = async ({ params }: currentRouteProps) => {
                     ))}
                   </ul>
                 </div>
+              )}
+
+              {itemInfo.i_group && (
+                <ProductGroupSelector
+                  group={itemInfo.i_group}
+                  currentId={itemInfo.itemid}
+                />
               )}
 
               <div className="relative flex w-full h-fit my-1">
