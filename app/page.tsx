@@ -24,7 +24,7 @@ import {
   generateWebSiteSchema,
   StructuredData,
 } from "@/lib/structured-data";
-import { isDown } from "@/lib/site-config";
+import { isDown, siteURL } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Home | Evo-TechBD - Bangladesh's Premier Tech Store",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     title: "Evo-Tech Bangladesh - 3D Printers, Electronics & Tech Services",
     description:
       "Shop premium 3D printers, filaments, electronics. Professional 3D printing & laser engraving services in Bangladesh.",
-    url: process.env.NEXT_PUBLIC_FEND_URL || "https://evo-techbd.com",
+    url: siteURL,
     siteName: "Evo-Tech Bangladesh",
     type: "website",
     locale: "en_US",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
       "Shop premium 3D printers, filaments, electronics. Professional 3D printing & laser engraving services.",
   },
   alternates: {
-    canonical: process.env.NEXT_PUBLIC_FEND_URL || "https://evo-techbd.com",
+    canonical: siteURL,
   },
 };
 
@@ -270,7 +270,7 @@ const Home = async () => {
     return <HomeMaintenancePageDynamic />;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || "https://evo-techbd.com";
+  const baseUrl = siteURL;
 
   // Generate structured data for homepage
   const organizationSchema = generateOrganizationSchema({

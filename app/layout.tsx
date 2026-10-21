@@ -1,4 +1,5 @@
 import "./globals.css";
+import { siteURL } from "@/lib/site-config";
 import type { Metadata } from "next";
 import { inter, roboto } from "@/utils/fonts";
 import { Providers } from "./providers";
@@ -13,7 +14,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com'),
+  metadataBase: new URL(siteURL),
   title: {
     template: "%s | Evo-Tech Bangladesh",
     default: "Evo-Tech Bangladesh - Premium Tech Products & 3D Printing Services",
@@ -48,13 +49,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com',
+    url: siteURL,
     title: 'Evo-Tech Bangladesh - Premium Tech Products & 3D Printing Services',
     description: 'Leading tech e-commerce in Bangladesh offering 3D printers, filaments, electronics, and professional 3D printing services.',
     siteName: 'Evo-Tech Bangladesh',
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com'}/assets/EvoTechBD-logo-white.png`,
+        url: `${siteURL}/assets/EvoTechBD-logo-white.png`,
         width: 800,
         height: 600,
         alt: 'Evo-Tech Bangladesh Logo',
