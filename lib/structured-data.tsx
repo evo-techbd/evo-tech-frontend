@@ -1,3 +1,4 @@
+import { siteURL } from "@/lib/site-config";
 // Utility functions for generating structured data (JSON-LD) for SEO
 
 export interface Product {
@@ -32,7 +33,7 @@ export interface BreadcrumbItem {
 }
 
 export function generateProductSchema(product: Product) {
-  const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com';
+  const baseUrl = siteURL;
 
   return {
     '@context': 'https://schema.org',
@@ -115,7 +116,7 @@ export function generateWebSiteSchema(url: string, name: string) {
 }
 
 export function generateLocalBusinessSchema() {
-  const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com';
+  const baseUrl = siteURL;
 
   return {
     '@context': 'https://schema.org',

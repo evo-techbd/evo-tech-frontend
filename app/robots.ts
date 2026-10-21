@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { siteURL } from '@/lib/site-config'
  
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com'
+  const baseUrl = siteURL
   
   return {
     rules: [
@@ -14,7 +15,6 @@ export default function robots(): MetadataRoute.Robots {
           '/user/dashboard/',
           '/api/',
           '/checkout/',
-          '/_next/',
           '/admin/',
         ],
       },

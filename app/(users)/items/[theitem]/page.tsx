@@ -1,3 +1,4 @@
+import { siteURL } from "@/lib/site-config";
 import ThumbnailCarousel from "@/components/carousels/thumbnailcarousel";
 import { BreadCrumbItems } from "@/utils/types_interfaces/shared_interfaces";
 import EvoBreadcrumbs from "@/components/ui/evo_breadcrumbs";
@@ -21,7 +22,7 @@ export const generateMetadata = async (
 ): Promise<Metadata> => {
   const params = await props.params;
   const itemslug = params.theitem;
-  const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || "https://evo-techbd.com";
+  const baseUrl = siteURL;
 
   // Fetch product data for accurate metadata using native fetch with ISR caching
   try {
@@ -256,7 +257,7 @@ const fetchItemData = async (itemSlugHere: string) => {
 const IndividualItem = async ({ params }: currentRouteProps) => {
   const paramsObj = await params;
   const [itemInfo] = await Promise.all([fetchItemData(paramsObj.theitem)]);
-  const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || "https://evo-techbd.com";
+  const baseUrl = siteURL;
 
   if (!itemInfo) {
     return (
