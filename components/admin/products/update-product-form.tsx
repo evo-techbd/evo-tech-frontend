@@ -290,9 +290,8 @@ const UpdateProductForm = ({ itemInfo }: UpdateProductFormProps) => {
       if (data.item_weight) {
         formdata.append("weight", data.item_weight);
       }
-      if (data.landing_section_id) {
-        formdata.append("landingpageSectionId", data.landing_section_id);
-      }
+      // Always sent: "" tells the backend to remove the product from its section
+      formdata.append("landingpageSectionId", data.landing_section_id || "");
 
       // Additional new images - compress before upload
       // console.log(
