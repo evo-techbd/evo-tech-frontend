@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { siteURL } from '@/lib/site-config'
 import axios from 'axios'
 
-const baseUrl = process.env.NEXT_PUBLIC_FEND_URL || 'https://evo-techbd.com'
+const baseUrl = siteURL
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
