@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import EpsCheckoutBanner from "@/public/assets/eps/eps-checkout-banner.png";
 import { currencyFormatBDT } from "@/lib/all_utils";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
@@ -37,6 +38,8 @@ import { calculatePayment } from "./checkout_payment_calc";
 import {
   DeliveryChargeSettings,
   DEFAULT_DELIVERY_CHARGE_SETTINGS,
+  EPS_CHARGE_PERCENT,
+  getEPSCharge,
 } from "@/utils/essential_functions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { validateCoupon } from "@/actions/user/coupons";
@@ -56,6 +59,9 @@ const CheckoutParts = () => {
   const [deliveryCharge, setDeliveryCharge] = useState<number | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  // Set once the order exists: the cart is cleared then, so show this instead
+  // of "Cart is empty!" while we wait to leave the page
+  const [postOrderMessage, setPostOrderMessage] = useState<string | null>(null);
   const [pickupPoints, setPickupPoints] = useState<PickupPointDisplayType[]>(
     [],
   );
@@ -251,25 +257,38 @@ const CheckoutParts = () => {
     deliveryChargeSettings,
   ]);
 
+  // EPS fee on the whole order value; the backend recomputes the same amount
+  const epsCharge = useMemo(
+    () =>
+      paymentMethod === "eps"
+        ? getEPSCharge(
+            cartSubTotal - (discountAmount ?? 0) + (deliveryCharge ?? 0),
+          )
+        : 0,
+    [paymentMethod, cartSubTotal, discountAmount, deliveryCharge],
+  );
+
   const totalPayableAmount = useMemo(() => {
     return (
       cartSubTotal +
       (deliveryCharge ?? 0) +
       codCharge +
-      bKashCharge -
+      bKashCharge +
+      epsCharge -
       (discountAmount ?? 0)
     );
-  }, [cartSubTotal, deliveryCharge, codCharge, bKashCharge, discountAmount]);
+  }, [cartSubTotal, deliveryCharge, codCharge, bKashCharge, epsCharge, discountAmount]);
 
   const dueNowTotal = useMemo(() => {
     const baseAmount =
       dueNowSubtotal +
       (deliveryCharge ?? 0) +
       codCharge +
-      bKashCharge -
+      bKashCharge +
+      epsCharge -
       (discountAmount ?? 0);
     return Math.max(Math.round(baseAmount * 100) / 100, 0);
-  }, [dueNowSubtotal, deliveryCharge, codCharge, bKashCharge, discountAmount]);
+  }, [dueNowSubtotal, deliveryCharge, codCharge, bKashCharge, epsCharge, discountAmount]);
 
   const payLaterAmount = hasPreOrderItems ? preOrderBalanceDue : 0;
 
@@ -362,7 +381,7 @@ const CheckoutParts = () => {
       discount: discountAmount || 0,
       couponCode: appliedCouponCode || undefined, // Include applied coupon code
       deliveryCharge: deliveryCharge ?? 0,
-      additionalCharge: (codCharge ?? 0) + (bKashCharge ?? 0),
+      additionalCharge: (codCharge ?? 0) + (bKashCharge ?? 0) + epsCharge,
       totalPayable: totalPayableAmount || 0, // Fixed: Ensure it's a number, not NaN
       items: cartItems ? cartItems : [],
     };
@@ -419,6 +438,11 @@ const CheckoutParts = () => {
 
       // Show success toast
       toast.success("Order placed successfully!");
+      setPostOrderMessage(
+        data.paymentMethod === "eps"
+          ? "Taking you to the secure EPS payment page..."
+          : "Taking you to your order...",
+      );
 
       // Clear cart
       dispatch(setCartData([]));
@@ -600,6 +624,22 @@ const CheckoutParts = () => {
     setCouponCode("");
     toast.success("Coupon removed");
   };
+
+  if (postOrderMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-[300px] gap-4 text-center animate-in fade-in duration-300">
+        <div className="w-10 h-10 rounded-full border-[3px] border-stone-200 border-t-stone-800 animate-spin" />
+        <div className="flex flex-col gap-1">
+          <p className="text-[15px] sm:text-[16px] leading-6 font-[600] text-stone-900">
+            {`Order placed`}
+          </p>
+          <p className="text-[13px] sm:text-[14px] leading-5 text-stone-500">
+            {postOrderMessage}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!cartItems) {
     return (
@@ -1270,12 +1310,25 @@ const CheckoutParts = () => {
                 {/* EPS hosted payment gateway */}
                 {paymentMethod === "eps" && (
                   <div className="flex flex-col w-full h-fit mt-2 p-3 rounded-[4px] border border-[#0866FF] bg-gradient-to-br from-[#0866FF]/5 to-transparent gap-1">
+                    <Image
+                      src={EpsCheckoutBanner}
+                      alt="Pay with EPS: Visa, Mastercard, Amex, bKash, Nagad, Rocket and others"
+                      sizes="(max-width: 640px) 100vw, 500px"
+                      draggable={false}
+                      className="w-full max-w-[500px] h-auto mb-1 pointer-events-none select-none"
+                    />
                     <p className="text-[11px] sm:text-[12px] font-[600] leading-4 text-[#0866FF]">
                       {`Secure online payment via EPS`}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-[11px] sm:text-[12px] font-[500] leading-4 text-stone-700">
                       <li>
                         {`Pay with Visa, Mastercard, Amex, bKash, Nagad, Rocket, Upay or internet banking.`}
+                      </li>
+                      <li>
+                        {`Online payment fee (${EPS_CHARGE_PERCENT}%): `}
+                        <span className="text-[#0866FF] font-semibold">{`${currencyFormatBDT(
+                          epsCharge,
+                        )} BDT`}</span>
                       </li>
                       <li>
                         {`Amount to pay now: `}
@@ -1684,7 +1737,7 @@ const CheckoutParts = () => {
               {`Additional Charge:`}
             </p>
             <p className="text-[11px] sm:text-[12px] leading-4 font-[600] text-stone-800">
-              {currencyFormatBDT(codCharge + bKashCharge)} BDT
+              {currencyFormatBDT(codCharge + bKashCharge + epsCharge)} BDT
             </p>
           </div>
 
@@ -1745,6 +1798,14 @@ const CheckoutParts = () => {
                 <span>{`Digital payment fee:`}</span>
                 <span className="font-[600] text-stone-800">
                   {currencyFormatBDT(bKashCharge)} BDT
+                </span>
+              </div>
+            )}
+            {epsCharge > 0 && (
+              <div className="flex items-center justify-between">
+                <span>{`Online payment fee (${EPS_CHARGE_PERCENT}%):`}</span>
+                <span className="font-[600] text-stone-800">
+                  {currencyFormatBDT(epsCharge)} BDT
                 </span>
               </div>
             )}

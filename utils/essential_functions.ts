@@ -69,4 +69,14 @@ const getCODCharge = (productTotal: number) => {
     return Math.round(productTotal * 0.01);
 };
 
-export { isHexColor, sumOfNumArrValues, calcMeanRating, getNameInitials, getAdditionalChargeforWeight, getCODCharge };
+// EPS deducts its fee from each settlement, so it's passed on to the customer.
+// Flat card rate (the highest EPS charges), since the customer only picks the
+// channel on the EPS page. Mirrors the backend's applyEpsCharge.
+const EPS_CHARGE_PERCENT = 2.2;
+const EPS_CHARGE_RATE = 0.022;
+
+const getEPSCharge = (chargeableAmount: number) => {
+    return Math.round(Math.max(chargeableAmount, 0) * EPS_CHARGE_RATE);
+};
+
+export { isHexColor, sumOfNumArrValues, calcMeanRating, getNameInitials, getAdditionalChargeforWeight, getCODCharge, getEPSCharge, EPS_CHARGE_PERCENT };

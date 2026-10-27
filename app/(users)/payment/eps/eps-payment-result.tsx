@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
+import {
+  Check,
+  X,
+  Clock,
+  Loader2,
+  Copy,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import axios from "@/utils/axios/axios";
 import axiosErrorLogger from "@/components/error/axios_error";
 
@@ -17,15 +25,56 @@ interface EpsPaymentResultProps {
   trackingCode?: string;
 }
 
-const MESSAGES: Record<Exclude<ViewState, "checking">, string> = {
-  success:
-    "Your payment has been received and your order is confirmed. Thank you!",
-  failed:
-    "Your payment could not be completed. Your order is saved — you can try paying again.",
-  cancelled:
-    "You cancelled the payment. Your order is saved — you can complete payment any time.",
-  pending:
-    "We haven't received confirmation from the payment gateway yet. If money was deducted, it will be reflected on your order shortly.",
+const VIEWS: Record<
+  ViewState,
+  {
+    title: string;
+    message: string;
+    statusLabel: string;
+    Icon: LucideIcon;
+    // Icon badge + status pill colours
+    tone: string;
+  }
+> = {
+  checking: {
+    title: "Confirming your payment",
+    message: "Hold on a moment while we check with the payment gateway.",
+    statusLabel: "Checking",
+    Icon: Loader2,
+    tone: "bg-stone-100 text-stone-600",
+  },
+  success: {
+    title: "Payment successful",
+    message:
+      "We've received your payment and your order is confirmed. Thank you for shopping with us.",
+    statusLabel: "Paid",
+    Icon: Check,
+    tone: "bg-emerald-50 text-emerald-600",
+  },
+  failed: {
+    title: "Payment failed",
+    message:
+      "Your payment couldn't be completed. Your order is saved, so you can try again.",
+    statusLabel: "Failed",
+    Icon: X,
+    tone: "bg-rose-50 text-rose-600",
+  },
+  cancelled: {
+    title: "Payment cancelled",
+    message:
+      "You left the payment page before paying. Your order is saved, so you can pay any time.",
+    statusLabel: "Cancelled",
+    Icon: X,
+    tone: "bg-stone-100 text-stone-600",
+  },
+  pending: {
+    title: "Awaiting confirmation",
+    message:
+      "We haven't heard back from the payment gateway yet. If money was deducted, it will show on your order shortly.",
+    statusLabel: "Pending",
+    Icon: Clock,
+    tone: "bg-amber-50 text-amber-600",
+  },
 };
 
 const toViewState = (status: string): ViewState => {
@@ -35,12 +84,16 @@ const toViewState = (status: string): ViewState => {
   return "failed";
 };
 
+const primaryButton =
+  "flex items-center justify-center w-full h-11 px-4 rounded-[6px] text-[13px] sm:text-[14px] font-[500] text-stone-100 bg-stone-800 hover:bg-stone-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-100";
+const secondaryButton =
+  "flex items-center justify-center w-full h-11 px-4 rounded-[6px] text-[13px] sm:text-[14px] font-[500] text-stone-700 bg-white border border-stone-300 hover:bg-stone-50 transition-colors duration-100";
+
 const EpsPaymentResult = ({
   initialStatus,
   orderId,
   trackingCode,
 }: EpsPaymentResultProps) => {
-  const router = useRouter();
   const [view, setView] = useState<ViewState>(toViewState(initialStatus));
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -93,90 +146,117 @@ const EpsPaymentResult = ({
     setIsRetrying(false);
   };
 
-  const goToTracking = () =>
-    router.push(
-      trackingCode
-        ? `/track-order?code=${encodeURIComponent(trackingCode)}`
-        : "/track-order",
-    );
+  const copyTrackingCode = async () => {
+    if (!trackingCode) return;
+    try {
+      await navigator.clipboard.writeText(trackingCode);
+      toast.success("Tracking code copied");
+    } catch {
+      toast.error("Couldn't copy. Please copy it manually.");
+    }
+  };
 
+  const trackOrderHref = trackingCode
+    ? `/track-order?code=${encodeURIComponent(trackingCode)}`
+    : "/track-order";
   const canRetry =
     !!orderId && (view === "failed" || view === "cancelled" || view === "pending");
+  const { title, message, statusLabel, Icon, tone } = VIEWS[view];
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-        {view === "checking" ? (
-          <div className="flex flex-col items-center gap-6">
-            <Loader2 className="w-20 h-20 text-blue-600 animate-spin" />
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-stone-900">
-                Confirming Payment
-              </h2>
-              <p className="text-stone-600">
-                Please wait while we confirm your payment...
-              </p>
-            </div>
+    <div className="flex justify-center w-full min-h-[70vh] px-4 py-14 sm:py-20 font-inter bg-stone-50">
+      <div className="flex flex-col w-full max-w-[420px] h-fit animate-in fade-in duration-300">
+        <div className="flex flex-col w-full p-6 sm:p-8 bg-white border border-stone-200 rounded-[8px]">
+          <div
+            className={`flex items-center justify-center w-12 h-12 rounded-full ${tone}`}
+          >
+            <Icon
+              className={`w-6 h-6 ${view === "checking" ? "animate-spin" : ""}`}
+              strokeWidth={2.25}
+            />
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-6">
-            {view === "success" && (
-              <CheckCircle2 className="w-20 h-20 text-green-600" />
-            )}
-            {view === "failed" && <XCircle className="w-20 h-20 text-red-600" />}
-            {(view === "cancelled" || view === "pending") && (
-              <AlertCircle className="w-20 h-20 text-orange-600" />
-            )}
 
-            <div className="text-center space-y-3">
-              <h2
-                className={`text-2xl font-bold ${
-                  view === "success"
-                    ? "text-green-600"
-                    : view === "failed"
-                      ? "text-red-600"
-                      : "text-orange-600"
-                }`}
-              >
-                {view === "success" && "Payment Successful!"}
-                {view === "failed" && "Payment Failed"}
-                {view === "cancelled" && "Payment Cancelled"}
-                {view === "pending" && "Payment Not Confirmed Yet"}
-              </h2>
-              <p className="text-stone-600 text-sm">{MESSAGES[view]}</p>
-              {trackingCode && (
-                <p className="text-stone-500 text-xs">
-                  {`Tracking code: `}
-                  <span className="font-semibold text-stone-700">
-                    {trackingCode}
-                  </span>
-                </p>
-              )}
-            </div>
+          <h1 className="mt-5 text-[18px] sm:text-[20px] leading-7 font-[600] tracking-tight text-stone-900">
+            {title}
+          </h1>
+          <p className="mt-1.5 text-[13px] sm:text-[14px] leading-6 text-stone-500">
+            {message}
+          </p>
 
-            <div className="flex flex-col w-full gap-3 mt-4">
-              {canRetry && (
-                <button
-                  onClick={handleRetry}
-                  disabled={isRetrying}
-                  className="w-full px-6 py-3 bg-stone-900 hover:bg-stone-800 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors duration-200"
-                >
-                  {isRetrying ? "Redirecting..." : "Pay Now"}
-                </button>
-              )}
-              <button
-                onClick={goToTracking}
-                className={`w-full px-6 py-3 font-semibold rounded-lg transition-colors duration-200 ${
-                  view === "success"
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-stone-100 hover:bg-stone-200 text-stone-800"
-                }`}
-              >
-                Track Order
-              </button>
-            </div>
-          </div>
-        )}
+          {view !== "checking" && (
+            <>
+              <dl className="flex flex-col w-full mt-6 border-t border-stone-200 text-[13px] leading-5">
+                <div className="flex items-center justify-between py-3 border-b border-stone-100">
+                  <dt className="text-stone-500">Payment status</dt>
+                  <dd>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[12px] font-[500] ${tone}`}
+                    >
+                      {statusLabel}
+                    </span>
+                  </dd>
+                </div>
+                {trackingCode && (
+                  <div className="flex items-center justify-between py-3 border-b border-stone-100">
+                    <dt className="text-stone-500">Tracking code</dt>
+                    <dd className="flex items-center gap-1.5">
+                      <span className="font-[600] text-stone-800 tabular-nums">
+                        {trackingCode}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyTrackingCode}
+                        aria-label="Copy tracking code"
+                        className="p-1 rounded-[4px] text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors duration-100"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              <div className="flex flex-col w-full mt-6 gap-2.5">
+                {canRetry ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      disabled={isRetrying}
+                      className={primaryButton}
+                    >
+                      {isRetrying ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Redirecting...
+                        </>
+                      ) : (
+                        "Try payment again"
+                      )}
+                    </button>
+                    <Link href={trackOrderHref} className={secondaryButton}>
+                      Track order
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href={trackOrderHref} className={primaryButton}>
+                      Track order
+                    </Link>
+                    <Link href="/products-and-accessories" className={secondaryButton}>
+                      Continue shopping
+                    </Link>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <p className="flex items-center justify-center mt-4 gap-1.5 text-[12px] text-stone-400">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Payments are processed securely by EPS
+        </p>
       </div>
     </div>
   );

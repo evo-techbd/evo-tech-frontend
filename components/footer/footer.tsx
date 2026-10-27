@@ -11,10 +11,8 @@ import { useContactInfo } from '@/hooks/use-contact-info';
 import { telHref, whatsappHref } from '@/lib/contact-info';
 
 import EvoTechBDLogo from '@/public/assets/EvoTechBD-logo-white.png';
-import VisaCardLogo from '@/public/assets/shared_resources/visa-logo.png';
-import BkashLogo from '@/public/assets/shared_resources/bkash-logo.png';
-import NagadLogo from '@/public/assets/shared_resources/nagad-logo.png';
-import NpsbLogo from '@/public/assets/shared_resources/npsb-logo.png';
+import EpsFooterDesktop from '@/public/assets/eps/eps-footer-desktop-dark.png';
+import EpsFooterMobile from '@/public/assets/eps/eps-footer-mobile-dark.png';
 
 
 
@@ -28,13 +26,6 @@ const Footer = () => {
         { label: "linkedin", href: contact.linkedin, Icon: BiLogoLinkedin },
         { label: "youtube", href: contact.youtube, Icon: BsYoutube },
     ].filter((link) => link.href);
-
-    const footerPaymentMethods: { id: number; name: string; logo: any; }[] = [
-        { id: 1, name: "Visa logo", logo: VisaCardLogo },
-        { id: 2, name: "bKash logo", logo: BkashLogo },
-        { id: 3, name: "Nagad logo", logo: NagadLogo },
-        { id: 4, name: "NPSB logo", logo: NpsbLogo },
-    ];
 
 
     return (
@@ -167,24 +158,24 @@ const Footer = () => {
                             </a>
                         ))}
                     </div>
+                </div>
 
-                    <div className="flex w-fit h-fit gap-1" aria-label="payment-partners">
-                        {
-                            footerPaymentMethods.length > 0 && footerPaymentMethods.map((pmethod) => (
-                                <div key={`f_pmethod${pmethod.id}`} className="relative w-[28px] h-[16px] md:w-[36px] md:h-[20px] bg-stone-100 border-x-[4px] border-y-2 md:border-x-[6px] md:border-y-3 border-stone-100 rounded-[3px] overflow-hidden focus:outline-none">
-                                    <Image
-                                        src={pmethod.logo}
-                                        alt={pmethod.name}
-                                        fill
-                                        sizes="100%"
-                                        draggable={false}
-                                        quality={100}
-                                        className="object-contain pointer-events-none select-none"
-                                    />
-                                </div>
-                            ))
-                        }
-                    </div>
+                {/* EPS merchant banner: payment channels, verified by EPS */}
+                <div className="flex justify-center w-full h-fit pb-5" aria-label="payment-partners">
+                    <Image
+                        src={EpsFooterDesktop}
+                        alt="Pay with Visa, Mastercard, Amex, DBBL Nexus, bKash, Nagad, Rocket, Upay and more. Verified by EPS"
+                        sizes="(max-width: 1440px) 100vw, 1344px"
+                        draggable={false}
+                        className="hidden lg:block w-full h-auto rounded-[6px] pointer-events-none select-none"
+                    />
+                    <Image
+                        src={EpsFooterMobile}
+                        alt="Pay with Visa, Mastercard, Amex, DBBL Nexus, bKash, Nagad, Rocket, Upay and more. Verified by EPS"
+                        sizes="(max-width: 640px) 100vw, 640px"
+                        draggable={false}
+                        className="lg:hidden w-full max-w-[640px] h-auto rounded-[6px] pointer-events-none select-none"
+                    />
                 </div>
 
                 <div className="flex flex-col items-center w-full h-fit">
