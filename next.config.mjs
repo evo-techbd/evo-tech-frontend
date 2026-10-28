@@ -48,6 +48,16 @@ const nextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  // EPS only accepts return URLs on the registered storefront domain, so its
+  // callbacks land here and are proxied (GET and POST) to the backend
+  async rewrites() {
+    return [
+      {
+        source: "/api/payment/eps/callback/:outcome/:merchantTransactionId",
+        destination: `${backendUrl.replace(/\/+$/, "")}/payment/eps/callback/:outcome/:merchantTransactionId`,
+      },
+    ];
+  },
   env: {
     NEXT_PUBLIC_FEND_URL: frontUrl,
     NEXT_PUBLIC_BACKEND_URL: backendUrl,

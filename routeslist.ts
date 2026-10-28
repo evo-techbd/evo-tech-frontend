@@ -42,6 +42,9 @@ export const authRoutes: string[] = [
  */
 export const apiAuthPrefix = "/api/auth";
 
+// EPS gateway callbacks, proxied to the backend by a rewrite in next.config
+export const paymentCallbackPrefix = "/api/payment/";
+
 
 /**
  * default route for users to redirect to after signing-in

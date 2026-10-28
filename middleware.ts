@@ -6,6 +6,7 @@ import {
   adminRoutePrefix,
   employeeRoutePrefix,
   apiAuthPrefix,
+  paymentCallbackPrefix,
   DEFAULT_SIGNIN_REDIRECT_USER,
   DEFAULT_SIGNIN_REDIRECT_ADMIN,
   DEFAULT_SIGNIN_REDIRECT_EMPLOYEE,
@@ -46,7 +47,9 @@ export default async function middleware(request: NextRequest) {
   const referer = headers.get("referer");
   const fetchDest = headers.get("sec-fetch-dest");
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
+  const isApiAuthRoute =
+    nextUrl.pathname.startsWith(apiAuthPrefix) ||
+    nextUrl.pathname.startsWith(paymentCallbackPrefix);
   const isAdminOnlyRoute = nextUrl.pathname.startsWith(adminRoutePrefix);
   const isEmployeeOnlyRoute = nextUrl.pathname.startsWith(employeeRoutePrefix);
   const isProtectedRoute = nextUrl.pathname.startsWith(protectedRoutePrefix);
